@@ -6,31 +6,27 @@ import type { PipelineColumn } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-export default function PipelinePage() {
-  const stages = db
-    .select()
-    .from(pipelineStages)
-    .orderBy(asc(pipelineStages.order))
-    .all();
-
-  const allDeals = db
-    .select({
-      id: deals.id,
-      title: deals.title,
-      value: deals.value,
-      stageId: deals.stageId,
-      contactId: deals.contactId,
-      expectedClose: deals.expectedClose,
-      probability: deals.probability,
-      notes: deals.notes,
-      createdAt: deals.createdAt,
-      updatedAt: deals.updatedAt,
-      contactName: contacts.name,
-      contactTemperature: contacts.temperature,
-    })
-    .from(deals)
-    .leftJoin(contacts, eq(deals.contactId, contacts.id))
-    .all();
+export default async function PipelinePage() {
+  const [stages, allDeals] = await Promise.all([
+    db.select().from(pipelineStages).orderBy(asc(pipelineStages.order)),
+    db
+      .select({
+        id: deals.id,
+        title: deals.title,
+        value: deals.value,
+        stageId: deals.stageId,
+        contactId: deals.contactId,
+        expectedClose: deals.expectedClose,
+        probability: deals.probability,
+        notes: deals.notes,
+        createdAt: deals.createdAt,
+        updatedAt: deals.updatedAt,
+        contactName: contacts.name,
+        contactTemperature: contacts.temperature,
+      })
+      .from(deals)
+      .leftJoin(contacts, eq(deals.contactId, contacts.id)),
+  ]);
 
   const columns: PipelineColumn[] = stages.map((stage) => ({
     ...stage,

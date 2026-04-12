@@ -1,145 +1,43 @@
- import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+/**
+ * Database connector — PostgreSQL (production / Vercel Neon)
+ *
+ * Requires DATABASE_URL in environment.
+ * For local development, add to .env.local:
+ *   DATABASE_URL=postgres://user:pass@host/db?sslmode=require
+ *
+ * Recommended free local Postgres options:
+ *   - Neon free tier:  https://neon.tech
+ *   - Docker: docker run -e POSTGRES_PASSWORD=crm -p 5432:5432 postgres
+ *             DATABASE_URL=postgres://postgres:crm@localhost:5432/postgres
+ *
+ * For SQLite local dev without Postgres, use src/db/index-sqlite.ts manually.
+ */
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
-import path from "path";
-import fs from "fs";
 
-const DB_PATH = '/tmp/data/crm.db';
+const DATABASE_URL = process.env.DATABASE_URL;
 
-// Ensure data directory exists
-const dataDir = '/tmp/data'; 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+if (!DATABASE_URL) {
+  throw new Error(
+    "\nDATABASE_URL no configurado.\n" +
+      "Agrega a .env.local:\n" +
+      "  DATABASE_URL=postgres://user:pass@host/db?sslmode=require\n\n" +
+      "Opciones gratuitas:\n" +
+      "  1. Neon (recomendado): https://neon.tech\n" +
+      "  2. Docker local: postgres://postgres:crm@localhost:5432/postgres\n"
+  );
 }
 
-function createDatabase(): Database.Database {
-  const db = new Database(DB_PATH, { timeout: 15000 });
+const isLocalhost =
+  DATABASE_URL.includes("localhost") || DATABASE_URL.includes("127.0.0.1");
 
-  // Set pragmas individually with error handling
-  try {
-    db.pragma("journal_mode = WAL");
-  } catch {
-    // WAL mode might already be set by another process
-  }
+const client = postgres(DATABASE_URL, {
+  ssl: isLocalhost ? false : "require",
+  max: 1, // Vercel Fluid Compute: 1 connection per instance
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
 
-  try {
-    db.pragma("busy_timeout = 15000");
-  } catch {
-    // Ignore if can't set
-  }
-
-  try {
-    db.pragma("foreign_keys = ON");
-  } catch {
-    // Ignore
-  }
-
-  return db;
-}
-
-function initTables(db: Database.Database): void {
-  // Each CREATE TABLE is its own statement to minimize lock time
-  const tables = [
-    `CREATE TABLE IF NOT EXISTS contacts (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT,
-      phone TEXT,
-      company TEXT,
-      source TEXT NOT NULL DEFAULT 'otro',
-      temperature TEXT NOT NULL DEFAULT 'cold',
-      score INTEGER NOT NULL DEFAULT 0,
-      notes TEXT,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS pipeline_stages (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      "order" INTEGER NOT NULL,
-      color TEXT NOT NULL DEFAULT '#64748b',
-      is_won INTEGER NOT NULL DEFAULT 0,
-      is_lost INTEGER NOT NULL DEFAULT 0
-    )`,
-    `CREATE TABLE IF NOT EXISTS deals (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      value INTEGER NOT NULL DEFAULT 0,
-      stage_id TEXT NOT NULL REFERENCES pipeline_stages(id),
-      contact_id TEXT NOT NULL REFERENCES contacts(id),
-      expected_close INTEGER,
-      probability INTEGER NOT NULL DEFAULT 0,
-      notes TEXT,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS activities (
-      id TEXT PRIMARY KEY,
-      type TEXT NOT NULL,
-      description TEXT NOT NULL,
-      contact_id TEXT NOT NULL REFERENCES contacts(id),
-      deal_id TEXT REFERENCES deals(id),
-      scheduled_at INTEGER,
-      completed_at INTEGER,
-      created_at INTEGER NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS crm_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    )`,
-  ];
-
-  for (const sql of tables) {
-    try {
-      db.exec(sql);
-    } catch {
-      // Table might already exist or DB is locked - safe to continue
-    }
-  }
-}
-
-function seedDefaultStages(db: Database.Database): void {
-  try {
-    const result = db
-      .prepare("SELECT COUNT(*) as count FROM pipeline_stages")
-      .get() as { count: number } | undefined;
-
-    if (!result || result.count > 0) return;
-
-    const defaultStages = [
-      { name: "Prospecto", order: 1, color: "#64748b", isWon: 0, isLost: 0 },
-      { name: "Contactado", order: 2, color: "#2563eb", isWon: 0, isLost: 0 },
-      { name: "Propuesta", order: 3, color: "#8b5cf6", isWon: 0, isLost: 0 },
-      { name: "Negociacion", order: 4, color: "#ea580c", isWon: 0, isLost: 0 },
-      { name: "Cerrado Ganado", order: 5, color: "#16a34a", isWon: 1, isLost: 0 },
-      { name: "Cerrado Perdido", order: 6, color: "#dc2626", isWon: 0, isLost: 1 },
-    ];
-
-    const insert = db.prepare(
-      `INSERT OR IGNORE INTO pipeline_stages (id, name, "order", color, is_won, is_lost) VALUES (?, ?, ?, ?, ?, ?)`
-    );
-
-    const seedAll = db.transaction(() => {
-      for (const stage of defaultStages) {
-        insert.run(
-          crypto.randomUUID(),
-          stage.name,
-          stage.order,
-          stage.color,
-          stage.isWon,
-          stage.isLost
-        );
-      }
-    });
-
-    seedAll();
-  } catch {
-    // Seeding can fail if another worker is doing it — that's fine
-  }
-}
-
-const sqlite = createDatabase();
-initTables(sqlite);
-seedDefaultStages(sqlite);
-
-export const db = drizzle(sqlite, { schema });
+export const db = drizzle(client, { schema });
+export { schema };

@@ -15,41 +15,36 @@ export async function POST() {
         instructions: [
           "1. Registrate en https://resend.com (gratis)",
           "2. Crea un API key en el dashboard",
-          "3. Agrega a .env.local:",
+          "3. Agrega a .env.local (o variables de entorno en Vercel):",
           "   RESEND_API_KEY=re_...",
-          "   DIGEST_EMAIL=tu@email.com",
-          "4. Reinicia el servidor dev",
+          "   DIGEST_EMAIL=byolisjo@gmail.com",
+          "4. Reinicia el servidor",
         ],
       },
       { status: 400 }
     );
   }
 
-  // Gather data
-  const allContacts = db.select().from(contacts).all();
-  const allDeals = db.select().from(deals).all();
-  const stages = db
-    .select()
-    .from(pipelineStages)
-    .orderBy(asc(pipelineStages.order))
-    .all();
+  const [allContacts, allDeals, stages, pendingActivities] = await Promise.all([
+    db.select().from(contacts),
+    db.select().from(deals),
+    db.select().from(pipelineStages).orderBy(asc(pipelineStages.order)),
+    db
+      .select({
+        id: activities.id,
+        type: activities.type,
+        description: activities.description,
+        scheduledAt: activities.scheduledAt,
+        contactName: contacts.name,
+      })
+      .from(activities)
+      .leftJoin(contacts, eq(activities.contactId, contacts.id))
+      .where(isNull(activities.completedAt)),
+  ]);
 
-  const pendingActivities = db
-    .select({
-      id: activities.id,
-      type: activities.type,
-      description: activities.description,
-      scheduledAt: activities.scheduledAt,
-      contactName: contacts.name,
-    })
-    .from(activities)
-    .leftJoin(contacts, eq(activities.contactId, contacts.id))
-    .where(isNull(activities.completedAt))
-    .all();
-
-  const now = Math.floor(Date.now() / 1000);
+  const now = new Date();
   const overdue = pendingActivities.filter(
-    (a) => a.scheduledAt && (typeof a.scheduledAt === "number" ? a.scheduledAt : Math.floor(a.scheduledAt.getTime() / 1000)) < now
+    (a) => a.scheduledAt && new Date(a.scheduledAt) < now
   );
 
   const hotLeads = allContacts.filter((c) => c.temperature === "hot");
@@ -59,11 +54,10 @@ export async function POST() {
   });
   const pipelineValue = activeDeals.reduce((sum, d) => sum + d.value, 0);
 
-  // Build HTML email
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h1 style="color: #1e293b; font-size: 24px; margin-bottom: 4px;">Auto-CRM</h1>
-      <p style="color: #64748b; margin-top: 0;">Resumen diario — ${new Date().toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}</p>
+      <h1 style="color: #1e293b; font-size: 24px; margin-bottom: 4px;">ByOlisJo CRM</h1>
+      <p style="color: #64748b; margin-top: 0;">Resumen diario — ${now.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}</p>
 
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
 
@@ -99,13 +93,10 @@ export async function POST() {
       ` : ""}
 
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-      <p style="color: #94a3b8; font-size: 12px; text-align: center;">
-        Auto-CRM — Tu CRM local con IA
-      </p>
+      <p style="color: #94a3b8; font-size: 12px; text-align: center;">ByOlisJo CRM</p>
     </div>
   `;
 
-  // Send via Resend
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -114,7 +105,7 @@ export async function POST() {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: process.env.DIGEST_FROM || "Auto-CRM <onboarding@resend.dev>",
+        from: process.env.DIGEST_FROM || "ByOlisJo CRM <onboarding@resend.dev>",
         to: [email],
         subject: `CRM Digest: ${overdue.length > 0 ? `${overdue.length} vencidos` : `${activeDeals.length} deals activos`}`,
         html,
@@ -123,10 +114,7 @@ export async function POST() {
 
     if (!res.ok) {
       const err = await res.text();
-      return NextResponse.json(
-        { error: `Error de Resend: ${err}` },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: `Error de Resend: ${err}` }, { status: 500 });
     }
 
     const result = await res.json();

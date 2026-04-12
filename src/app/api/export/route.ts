@@ -2,8 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/db";
 import { contacts, deals, pipelineStages } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
-import { formatDate, formatCurrency } from "@/lib/constants";
-import { SOURCE_LABELS } from "@/lib/constants";
+import { formatDate, formatCurrency, SOURCE_LABELS } from "@/lib/constants";
 import type { LeadSource } from "@/types";
 
 function escapeCSV(value: string | null | undefined): string {
@@ -27,22 +26,14 @@ export async function GET(request: NextRequest) {
   const today = new Date().toISOString().split("T")[0];
 
   if (type === "contacts") {
-    const allContacts = db
+    const allContacts = await db
       .select()
       .from(contacts)
-      .orderBy(desc(contacts.createdAt))
-      .all();
+      .orderBy(desc(contacts.createdAt));
 
     const headers = [
-      "Nombre",
-      "Email",
-      "Telefono",
-      "Empresa",
-      "Fuente",
-      "Temperatura",
-      "Score",
-      "Notas",
-      "Fecha de creacion",
+      "Nombre", "Email", "Telefono", "Empresa", "Fuente",
+      "Canal", "Campana", "Temperatura", "Score", "Notas", "Fecha de creacion",
     ];
 
     const rows = allContacts.map((c) => [
@@ -51,18 +42,15 @@ export async function GET(request: NextRequest) {
       c.phone || "",
       c.company || "",
       SOURCE_LABELS[c.source as LeadSource] || c.source,
-      c.temperature === "hot"
-        ? "Caliente"
-        : c.temperature === "warm"
-          ? "Tibio"
-          : "Frio",
+      c.channel || "",
+      c.campaign || "",
+      c.temperature === "hot" ? "Caliente" : c.temperature === "warm" ? "Tibio" : "Frio",
       String(c.score),
       c.notes || "",
       formatDate(c.createdAt),
     ]);
 
     const csv = buildCSV(headers, rows);
-
     return new Response("\ufeff" + csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
@@ -72,7 +60,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === "deals") {
-    const allDeals = db
+    const allDeals = await db
       .select({
         title: deals.title,
         value: deals.value,
@@ -86,18 +74,11 @@ export async function GET(request: NextRequest) {
       .from(deals)
       .leftJoin(contacts, eq(deals.contactId, contacts.id))
       .leftJoin(pipelineStages, eq(deals.stageId, pipelineStages.id))
-      .orderBy(asc(pipelineStages.order))
-      .all();
+      .orderBy(asc(pipelineStages.order));
 
     const headers = [
-      "Titulo",
-      "Valor",
-      "Contacto",
-      "Etapa",
-      "Probabilidad",
-      "Cierre Estimado",
-      "Notas",
-      "Fecha de creacion",
+      "Titulo", "Valor", "Contacto", "Etapa",
+      "Probabilidad", "Cierre Estimado", "Notas", "Fecha de creacion",
     ];
 
     const rows = allDeals.map((d) => [
@@ -112,7 +93,6 @@ export async function GET(request: NextRequest) {
     ]);
 
     const csv = buildCSV(headers, rows);
-
     return new Response("\ufeff" + csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",

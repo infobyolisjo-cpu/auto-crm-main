@@ -12,6 +12,8 @@ export const TEMPERATURE_CONFIG: Record<
 export const SOURCE_LABELS: Record<LeadSource, string> = {
   website: "Sitio web",
   whatsapp: "WhatsApp",
+  instagram: "Instagram",
+  linkedin: "LinkedIn",
   referido: "Referido",
   redes_sociales: "Redes sociales",
   llamada_fria: "Llamada fria",

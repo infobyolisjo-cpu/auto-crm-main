@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     query = query.where(eq(contacts.source, source)) as typeof query;
   }
 
-  const results = query.orderBy(desc(contacts.createdAt)).all();
+  const results = await query.orderBy(desc(contacts.createdAt));
   return NextResponse.json(results);
 }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "JSON invalido" }, { status: 400 });
   }
 
-  const { name, email, phone, company, source, temperature, score, notes } =
+  const { name, email, phone, company, source, channel, campaign, temperature, score, notes } =
     body;
 
   if (!name) {
@@ -52,8 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const now = new Date();
-    const result = db
+    const [result] = await db
       .insert(contacts)
       .values({
         name,
@@ -61,14 +60,13 @@ export async function POST(request: NextRequest) {
         phone: phone || null,
         company: company || null,
         source: source || "otro",
+        channel: channel || null,
+        campaign: campaign || null,
         temperature: temperature || "cold",
         score: score || 0,
         notes: notes || null,
-        createdAt: now,
-        updatedAt: now,
       })
-      .returning()
-      .get();
+      .returning();
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

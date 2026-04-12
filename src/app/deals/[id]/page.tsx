@@ -19,27 +19,14 @@ export default async function DealDetailPage({
 }) {
   const { id } = await params;
 
-  const deal = db.select().from(deals).where(eq(deals.id, id)).get();
+  const [deal] = await db.select().from(deals).where(eq(deals.id, id));
   if (!deal) notFound();
 
-  const contact = db
-    .select()
-    .from(contacts)
-    .where(eq(contacts.id, deal.contactId))
-    .get();
-
-  const stage = db
-    .select()
-    .from(pipelineStages)
-    .where(eq(pipelineStages.id, deal.stageId))
-    .get();
-
-  const dealActivities = db
-    .select()
-    .from(activities)
-    .where(eq(activities.dealId, id))
-    .orderBy(desc(activities.createdAt))
-    .all();
+  const [[contact], [stage], dealActivities] = await Promise.all([
+    db.select().from(contacts).where(eq(contacts.id, deal.contactId)),
+    db.select().from(pipelineStages).where(eq(pipelineStages.id, deal.stageId)),
+    db.select().from(activities).where(eq(activities.dealId, id)).orderBy(desc(activities.createdAt)),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -158,7 +145,7 @@ export default async function DealDetailPage({
                             {config?.label || activity.type}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {formatRelativeDate(activity.createdAt as number | Date)}
+                            {activity.createdAt ? formatRelativeDate(activity.createdAt) : ""}
                           </span>
                         </div>
                         <p className="text-sm mt-1">{activity.description}</p>

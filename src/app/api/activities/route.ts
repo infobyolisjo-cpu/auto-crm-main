@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     query = query.where(eq(activities.dealId, dealId)) as typeof query;
   }
 
-  const results = query.orderBy(desc(activities.createdAt)).all();
+  const results = await query.orderBy(desc(activities.createdAt));
   return NextResponse.json(results);
 }
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = db
+    const [result] = await db
       .insert(activities)
       .values({
         type,
@@ -61,16 +61,13 @@ export async function POST(request: NextRequest) {
         dealId: dealId || null,
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         completedAt: null,
-        createdAt: new Date(),
       })
-      .returning()
-      .get();
+      .returning();
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Unknown";
     return NextResponse.json(
-      { error: `Error al crear actividad: ${msg}` },
+      { error: `Error al crear actividad: ${error instanceof Error ? error.message : "Unknown"}` },
       { status: 500 }
     );
   }

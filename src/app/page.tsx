@@ -9,14 +9,24 @@ import type { DashboardStats } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const allContacts = db.select().from(contacts).all();
-  const allDeals = db.select().from(deals).all();
-  const stages = db
-    .select()
-    .from(pipelineStages)
-    .orderBy(asc(pipelineStages.order))
-    .all();
+export default async function DashboardPage() {
+  const [allContacts, allDeals, stages, recentActivities] = await Promise.all([
+    db.select().from(contacts),
+    db.select().from(deals),
+    db.select().from(pipelineStages).orderBy(asc(pipelineStages.order)),
+    db
+      .select({
+        id: activities.id,
+        type: activities.type,
+        description: activities.description,
+        contactName: contacts.name,
+        createdAt: activities.createdAt,
+      })
+      .from(activities)
+      .leftJoin(contacts, eq(activities.contactId, contacts.id))
+      .orderBy(desc(activities.createdAt))
+      .limit(5),
+  ]);
 
   const activeDeals = allDeals.filter((d) => {
     const stage = stages.find((s) => s.id === d.stageId);
@@ -51,20 +61,6 @@ export default function DashboardPage() {
       color: stage.color,
     }));
 
-  const recentActivities = db
-    .select({
-      id: activities.id,
-      type: activities.type,
-      description: activities.description,
-      contactName: contacts.name,
-      createdAt: activities.createdAt,
-    })
-    .from(activities)
-    .leftJoin(contacts, eq(activities.contactId, contacts.id))
-    .orderBy(desc(activities.createdAt))
-    .limit(5)
-    .all();
-
   const isFirstRun = allContacts.length === 0 && allDeals.length === 0;
 
   return (
@@ -98,9 +94,9 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="p-3 rounded-lg bg-card border">
-              <p className="font-medium">3. Carga datos demo</p>
+              <p className="font-medium">3. Conecta tus canales</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Ejecuta <code className="bg-muted px-1 rounded">npm run seed</code> en terminal
+                Configura webhook para web, WhatsApp, Instagram y LinkedIn
               </p>
             </div>
           </div>
@@ -123,7 +119,7 @@ export default function DashboardPage() {
                 type: string;
                 description: string;
                 contactName: string | null;
-                createdAt: number | Date;
+                createdAt: Date;
               }>
             }
           />

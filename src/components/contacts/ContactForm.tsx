@@ -29,6 +29,8 @@ const contactSchema = z.object({
   phone: z.string(),
   company: z.string(),
   source: z.string(),
+  channel: z.string(),
+  campaign: z.string(),
   temperature: z.enum(["cold", "warm", "hot"]),
   notes: z.string(),
 });
@@ -60,6 +62,8 @@ export function ContactForm({ open, onClose, initialData }: ContactFormProps) {
       phone: initialData?.phone || "",
       company: initialData?.company || "",
       source: initialData?.source || "otro",
+      channel: initialData?.channel || "",
+      campaign: initialData?.campaign || "",
       temperature: initialData?.temperature || "cold",
       notes: initialData?.notes || "",
     },
@@ -138,6 +142,8 @@ export function ContactForm({ open, onClose, initialData }: ContactFormProps) {
                 <SelectContent>
                   <SelectItem value="website">Sitio web</SelectItem>
                   <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="linkedin">LinkedIn</SelectItem>
                   <SelectItem value="referido">Referido</SelectItem>
                   <SelectItem value="redes_sociales">Redes sociales</SelectItem>
                   <SelectItem value="llamada_fria">Llamada fria</SelectItem>
@@ -167,6 +173,34 @@ export function ContactForm({ open, onClose, initialData }: ContactFormProps) {
                   <SelectItem value="hot">Caliente</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Canal</Label>
+              <Select
+                value={watch("channel")}
+                onValueChange={(v) => v && setValue("channel", v)}
+              >
+                <SelectTrigger className="cursor-pointer">
+                  <SelectValue placeholder="Canal de contacto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="web">Web</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="linkedin">LinkedIn</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="phone">Telefono</SelectItem>
+                  <SelectItem value="in_person">Presencial</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="campaign">Campana</Label>
+              <Input id="campaign" {...register("campaign")} placeholder="ej. lanzamiento-mayo" />
             </div>
           </div>
 

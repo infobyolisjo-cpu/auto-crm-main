@@ -5,6 +5,8 @@ export type ActivityType = "call" | "email" | "meeting" | "note" | "follow_up";
 export type LeadSource =
   | "website"
   | "whatsapp"
+  | "instagram"
+  | "linkedin"
   | "referido"
   | "redes_sociales"
   | "llamada_fria"
@@ -15,6 +17,16 @@ export type LeadSource =
   | "webhook"
   | "otro";
 
+export type Channel =
+  | "web"
+  | "whatsapp"
+  | "instagram"
+  | "linkedin"
+  | "email"
+  | "phone"
+  | "in_person"
+  | "otro";
+
 export interface Contact {
   id: string;
   name: string;
@@ -22,6 +34,8 @@ export interface Contact {
   phone: string | null;
   company: string | null;
   source: LeadSource;
+  channel: Channel | null;
+  campaign: string | null;
   temperature: Temperature;
   score: number;
   notes: string | null;
