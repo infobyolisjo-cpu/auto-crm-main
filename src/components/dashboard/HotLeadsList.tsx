@@ -61,6 +61,7 @@ export function HotLeadsList({ leads }: HotLeadsListProps) {
                       href={`https://wa.me/${cleanPhoneForWhatsApp(lead.phone)}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={`Contactar a ${lead.name} por WhatsApp`}
                     >
                       <MessageCircle className="h-3.5 w-3.5 text-green-600" />
                     </a>
