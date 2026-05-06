@@ -88,8 +88,7 @@ export const LeadInputSchema = z.object({
   // status / estado
   status: z
     .enum(["new", "contacted", "qualified", "unqualified", "lost"])
-    .optional()
-    .default("new"),
+    .optional(),
   estado: z
     .enum(["new", "contacted", "qualified", "unqualified", "lost"])
     .optional(),
@@ -193,8 +192,8 @@ export function normalizeLead(input: LeadInput): NormalizedLead {
   const rawInterest = input.interest ?? input.interes ?? null;
   const interest = rawInterest?.trim() || null;
 
-  // status — prefer `estado` over `status`
-  const status: LeadStatus = (input.estado ?? input.status ?? "new") as LeadStatus;
+  // status — prefer canonical English `status`, fall back to Spanish `estado`, then default "new"
+  const status: LeadStatus = (input.status ?? input.estado ?? "new") as LeadStatus;
 
   // metadata
   const metadata = input.metadata ?? null;
@@ -328,103 +327,7 @@ export async function ingestLead(normalized: NormalizedLead): Promise<IntakeResu
   const finalScore = Math.min(100, baseScore + boost);
   const temperature = suggestedTemperature;
 
-  // Duplicate detection
-  const existing = await findExistingContact(email, phone);
-
-  if (existing) {
-    // --- UPDATE existing contact ---
-    const dateStr = new Date().toISOString().split("T")[0];
-    const appendNote = `\n\n[${dateStr}] Nueva consulta via ${source}: ${notes ?? "contacto repetido"}`;
-    const updatedNotes = (existing.notes ?? "") + appendNote;
-
-    // Only fill in null fields — never downgrade temperature or score
-    const tempOrder: Record<Temperature, number> = { cold: 0, warm: 1, hot: 2 };
-    const existingTemp = (existing.temperature as Temperature) ?? "cold";
-    const newTemp: Temperature =
-      tempOrder[temperature] > tempOrder[existingTemp] ? temperature : existingTemp;
-    const newScore = Math.max(existing.score, finalScore);
-
-    const updateValues: Partial<typeof contacts.$inferInsert> = {
-      notes: updatedNotes,
-      temperature: newTemp,
-      score: newScore,
-      updatedAt: new Date(),
-    };
-    if (!existing.name && name) updateValues.name = name;
-    if (!existing.email && email) updateValues.email = email;
-    if (!existing.phone && phone) updateValues.phone = phone;
-    if (!existing.company && company) updateValues.company = company;
-    if (!existing.interest && interest) updateValues.interest = interest;
-
-    const [updatedContact] = await db
-      .update(contacts)
-      .set(updateValues)
-      .where(eq(contacts.id, existing.id))
-      .returning();
-
-    // Insert activity
-    const activityDesc = [
-      `Lead repetido via ${source}${campaign ? ` [${campaign}]` : ""}.`,
-      notes ? `Mensaje: ${notes.slice(0, 200)}` : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    await db.insert(activities).values({
-      type: "note",
-      description: activityDesc,
-      contactId: existing.id,
-    });
-
-    return { contact: updatedContact, action: "updated", isIncomplete, deal: null };
-  }
-
-  // --- CREATE new contact ---
-  const missingFields: string[] = [];
-  if (!name) missingFields.push("nombre");
-  if (!email) missingFields.push("email");
-  if (!phone) missingFields.push("teléfono");
-
-  let autoNote = notes ?? null;
-  if (isIncomplete && missingFields.length > 0) {
-    const incompleteNotice = `⚠️ Lead incompleto — faltan: ${missingFields.join(", ")}`;
-    autoNote = autoNote ? `${autoNote}\n\n${incompleteNotice}` : incompleteNotice;
-  }
-
-  const [newContact] = await db
-    .insert(contacts)
-    .values({
-      name: name ?? "Sin nombre",
-      email: email ?? null,
-      phone: phone ?? null,
-      company: company ?? null,
-      source,
-      channel: channel ?? null,
-      campaign: campaign ?? null,
-      temperature,
-      score: finalScore,
-      notes: autoNote,
-      status,
-      interest: interest ?? null,
-      metadata: metadata ?? null,
-      isIncomplete,
-    })
-    .returning();
-
-  // Build activity description
-  const activityLines: string[] = [
-    `Lead recibido via ${source}${campaign ? ` [${campaign}]` : ""}${company ? ` (${company})` : ""}`,
-  ];
-  if (interest) activityLines.push(`Interés: ${interest}`);
-  if (isIncomplete) activityLines.push(`⚠️ Lead incompleto — faltan: ${missingFields.join(", ")}`);
-
-  await db.insert(activities).values({
-    type: "note",
-    description: activityLines.join("\n"),
-    contactId: newContact.id,
-  });
-
-  // Find first usable pipeline stage
+  // Read-only query BEFORE transaction
   const stages = await db
     .select()
     .from(pipelineStages)
@@ -433,21 +336,148 @@ export async function ingestLead(normalized: NormalizedLead): Promise<IntakeResu
 
   const firstStage = stages.find((s) => !s.isLost) ?? null;
 
-  let newDeal: typeof deals.$inferSelect | null = null;
-  if (firstStage) {
-    const probMap: Record<Temperature, number> = { hot: 30, warm: 20, cold: 10 };
-    const [insertedDeal] = await db
-      .insert(deals)
+  // All writes inside transaction
+  const result = await db.transaction(async (tx) => {
+    // Duplicate detection (inline with tx.select for consistency)
+    let existing: typeof contacts.$inferSelect | null = null;
+    if (email || phone) {
+      if (email && phone) {
+        const rows = await tx
+          .select()
+          .from(contacts)
+          .where(or(eq(contacts.email, email), eq(contacts.phone, phone)))
+          .limit(1);
+        existing = rows[0] ?? null;
+      } else if (email) {
+        const rows = await tx
+          .select()
+          .from(contacts)
+          .where(eq(contacts.email, email))
+          .limit(1);
+        existing = rows[0] ?? null;
+      } else {
+        const rows = await tx
+          .select()
+          .from(contacts)
+          .where(eq(contacts.phone, phone!))
+          .limit(1);
+        existing = rows[0] ?? null;
+      }
+    }
+
+    if (existing) {
+      // --- UPDATE existing contact ---
+      const dateStr = new Date().toISOString().split("T")[0];
+      const appendNote = `\n\n[${dateStr}] Nueva consulta via ${source}: ${notes ?? "contacto repetido"}`;
+      const updatedNotes = (existing.notes ?? "") + appendNote;
+
+      // Only fill in null fields — never downgrade temperature or score
+      const tempOrder: Record<Temperature, number> = { cold: 0, warm: 1, hot: 2 };
+      const existingTemp = (existing.temperature as Temperature) ?? "cold";
+      const newTemp: Temperature =
+        tempOrder[temperature] > tempOrder[existingTemp] ? temperature : existingTemp;
+      const newScore = Math.max(existing.score, finalScore);
+
+      const updateValues: Partial<typeof contacts.$inferInsert> = {
+        notes: updatedNotes,
+        temperature: newTemp,
+        score: newScore,
+        updatedAt: new Date(),
+      };
+      if (!existing.name && name) updateValues.name = name;
+      if (!existing.email && email) updateValues.email = email;
+      if (!existing.phone && phone) updateValues.phone = phone;
+      if (!existing.company && company) updateValues.company = company;
+      if (!existing.interest && interest) updateValues.interest = interest;
+
+      const [updatedContact] = await tx
+        .update(contacts)
+        .set(updateValues)
+        .where(eq(contacts.id, existing.id))
+        .returning();
+
+      if (!updatedContact) throw new Error("Contact not found during update — may have been deleted");
+
+      // Insert activity
+      const activityDesc = [
+        `Lead repetido via ${source}${campaign ? ` [${campaign}]` : ""}.`,
+        notes ? `Mensaje: ${notes.slice(0, 200)}` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      await tx.insert(activities).values({
+        type: "note",
+        description: activityDesc,
+        contactId: existing.id,
+      });
+
+      return { contact: updatedContact, action: "updated" as const, isIncomplete, deal: null };
+    }
+
+    // --- CREATE new contact ---
+    const missingFields: string[] = [];
+    if (!name) missingFields.push("nombre");
+    if (!email) missingFields.push("email");
+    if (!phone) missingFields.push("teléfono");
+
+    let autoNote = notes ?? null;
+    if (isIncomplete && missingFields.length > 0) {
+      const incompleteNotice = `⚠️ Lead incompleto — faltan: ${missingFields.join(", ")}`;
+      autoNote = autoNote ? `${autoNote}\n\n${incompleteNotice}` : incompleteNotice;
+    }
+
+    const [newContact] = await tx
+      .insert(contacts)
       .values({
-        title: `Oportunidad con ${newContact.name}`,
-        value: 0,
-        stageId: firstStage.id,
-        contactId: newContact.id,
-        probability: probMap[temperature],
+        name: name ?? "Sin nombre",
+        email: email ?? null,
+        phone: phone ?? null,
+        company: company ?? null,
+        source,
+        channel: channel ?? null,
+        campaign: campaign ?? null,
+        temperature,
+        score: finalScore,
+        notes: autoNote,
+        status,
+        interest: interest ?? null,
+        metadata: metadata ?? null,
+        isIncomplete,
       })
       .returning();
-    newDeal = insertedDeal;
-  }
 
-  return { contact: newContact, action: "created", isIncomplete, deal: newDeal };
+    // Build activity description
+    const activityLines: string[] = [
+      `Lead recibido via ${source}${campaign ? ` [${campaign}]` : ""}${company ? ` (${company})` : ""}`,
+    ];
+    if (interest) activityLines.push(`Interés: ${interest}`);
+    if (isIncomplete) activityLines.push(`⚠️ Lead incompleto — faltan: ${missingFields.join(", ")}`);
+
+    await tx.insert(activities).values({
+      type: "note",
+      description: activityLines.join("\n"),
+      contactId: newContact.id,
+    });
+
+    let newDeal: typeof deals.$inferSelect | null = null;
+    if (firstStage) {
+      const probMap: Record<Temperature, number> = { hot: 30, warm: 20, cold: 10 };
+      const [insertedDeal] = await tx
+        .insert(deals)
+        .values({
+          title: `Oportunidad con ${newContact.name}`,
+          value: 0,
+          stageId: firstStage.id,
+          contactId: newContact.id,
+          probability: probMap[temperature],
+        })
+        .returning();
+      newDeal = insertedDeal;
+    }
+
+    return { contact: newContact, action: "created" as const, isIncomplete, deal: newDeal };
+  });
+
+  return result;
 }
