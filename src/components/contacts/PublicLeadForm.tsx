@@ -12,13 +12,22 @@ import { toast } from "sonner";
 
 const schema = z.object({
   nombre: z.string().min(2, "Mínimo 2 caracteres").max(100),
-  email: z.string().email("Email inválido").optional().or(z.literal("").transform(() => undefined)),
+  email: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().email("Email inválido").optional()
+  ),
   telefono: z.string().max(20).optional(),
   interes: z.string().max(200).optional(),
   mensaje: z.string().min(5, "Cuéntanos un poco más").max(1000),
 });
 
-type FormData = z.infer<typeof schema>;
+type FormData = {
+  nombre: string;
+  email?: string;
+  telefono?: string;
+  interes?: string;
+  mensaje: string;
+};
 
 interface PublicLeadFormProps {
   source?: string;
@@ -39,7 +48,8 @@ export function PublicLeadForm({
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
   });
 
   const onSubmit = async (data: FormData) => {
@@ -75,16 +85,18 @@ export function PublicLeadForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="lead-nombre">Nombre *</Label>
         <Input
           id="lead-nombre"
+          aria-required="true"
+          aria-describedby={errors.nombre ? "lead-nombre-error" : undefined}
           placeholder="Tu nombre completo"
           {...register("nombre")}
         />
         {errors.nombre && (
-          <p className="text-sm text-destructive">{errors.nombre.message}</p>
+          <p id="lead-nombre-error" className="text-sm text-destructive">{errors.nombre.message}</p>
         )}
       </div>
 
@@ -93,11 +105,12 @@ export function PublicLeadForm({
         <Input
           id="lead-email"
           type="email"
+          aria-describedby={errors.email ? "lead-email-error" : undefined}
           placeholder="tu@email.com"
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
+          <p id="lead-email-error" className="text-sm text-destructive">{errors.email.message}</p>
         )}
       </div>
 
@@ -105,11 +118,12 @@ export function PublicLeadForm({
         <Label htmlFor="lead-telefono">WhatsApp / Teléfono</Label>
         <Input
           id="lead-telefono"
+          aria-describedby={errors.telefono ? "lead-telefono-error" : undefined}
           placeholder="+52 55 1234 5678"
           {...register("telefono")}
         />
         {errors.telefono && (
-          <p className="text-sm text-destructive">{errors.telefono.message}</p>
+          <p id="lead-telefono-error" className="text-sm text-destructive">{errors.telefono.message}</p>
         )}
       </div>
 
@@ -117,11 +131,12 @@ export function PublicLeadForm({
         <Label htmlFor="lead-interes">¿Qué necesitas?</Label>
         <Input
           id="lead-interes"
+          aria-describedby={errors.interes ? "lead-interes-error" : undefined}
           placeholder="Ej: Automatización de WhatsApp, sitio web, IA..."
           {...register("interes")}
         />
         {errors.interes && (
-          <p className="text-sm text-destructive">{errors.interes.message}</p>
+          <p id="lead-interes-error" className="text-sm text-destructive">{errors.interes.message}</p>
         )}
       </div>
 
@@ -129,12 +144,14 @@ export function PublicLeadForm({
         <Label htmlFor="lead-mensaje">Mensaje *</Label>
         <Textarea
           id="lead-mensaje"
+          aria-required="true"
+          aria-describedby={errors.mensaje ? "lead-mensaje-error" : undefined}
           placeholder="Cuéntanos más sobre tu proyecto..."
           rows={4}
           {...register("mensaje")}
         />
         {errors.mensaje && (
-          <p className="text-sm text-destructive">{errors.mensaje.message}</p>
+          <p id="lead-mensaje-error" className="text-sm text-destructive">{errors.mensaje.message}</p>
         )}
       </div>
 
