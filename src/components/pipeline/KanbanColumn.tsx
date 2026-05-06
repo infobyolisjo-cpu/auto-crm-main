@@ -1,10 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { DealCard } from "./DealCard";
 import { formatCurrency } from "@/lib/constants";
 
@@ -26,36 +23,38 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({ id, name, color, deals }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
-
   const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-w-[280px] w-[280px] rounded-lg bg-muted/50 transition-colors ${
-        isOver ? "bg-muted" : ""
+      className={`flex flex-col min-w-[260px] w-[260px] rounded-xl bg-muted/40 border border-border transition-colors duration-150 ${
+        isOver ? "bg-muted/70 border-primary/30" : ""
       }`}
     >
-      <div className="flex items-center gap-2 p-3 border-b">
-        <div
-          className="w-3 h-3 rounded-full shrink-0"
+      {/* Column header */}
+      <div className="flex items-center gap-2 px-3 pt-3 pb-2.5">
+        <span
+          className="h-2 w-2 rounded-full shrink-0"
           style={{ backgroundColor: color }}
         />
-        <h3 className="text-sm font-semibold flex-1 truncate">{name}</h3>
-        <span className="text-xs text-muted-foreground bg-background rounded-full px-2 py-0.5">
+        <span className="text-[13px] font-semibold flex-1 truncate">{name}</span>
+        <span className="text-[11px] text-muted-foreground bg-background rounded-md px-1.5 py-0.5 border border-border tabular-nums">
           {deals.length}
         </span>
       </div>
 
-      <div className="p-2 text-xs text-muted-foreground text-center border-b">
-        {formatCurrency(totalValue)}
-      </div>
+      {/* Total value */}
+      {totalValue > 0 && (
+        <div className="px-3 pb-2 text-[11px] text-muted-foreground font-medium">
+          {formatCurrency(totalValue)}
+        </div>
+      )}
 
-      <SortableContext
-        items={deals.map((d) => d.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="flex-1 p-2 space-y-2 min-h-[100px] overflow-y-auto">
+      <div className="w-full border-t border-border/60" />
+
+      <SortableContext items={deals.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex-1 p-2 space-y-1.5 min-h-[80px] overflow-y-auto">
           {deals.map((deal) => (
             <DealCard key={deal.id} {...deal} />
           ))}
