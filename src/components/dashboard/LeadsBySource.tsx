@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SOURCE_LABELS } from "@/lib/constants";
 import type { LeadSource } from "@/types";
 
@@ -10,42 +9,37 @@ interface LeadsBySourceProps {
 
 export function LeadsBySource({ data }: LeadsBySourceProps) {
   const sorted = [...data].sort((a, b) => b.count - a.count).slice(0, 6);
-  const total = data.reduce((sum, d) => sum + d.count, 0);
+  const max = sorted[0]?.count ?? 1;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">Leads por Fuente</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {sorted.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin datos aún</p>
-        ) : (
-          <div className="space-y-3">
-            {sorted.map(({ source, count }) => {
-              const label =
-                SOURCE_LABELS[source as LeadSource] || source;
-              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-              return (
-                <div key={source}>
-                  <div className="flex items-center justify-between mb-1 text-sm">
-                    <span className="text-muted-foreground">{label}</span>
-                    <span className="font-medium">
-                      {count} ({pct}%)
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
+    <div className="rounded-xl border border-border bg-card px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+        Leads por Fuente
+      </p>
+      {sorted.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">Sin datos de origen</p>
+      ) : (
+        <div className="space-y-3">
+          {sorted.map(({ source, count }) => {
+            const label = SOURCE_LABELS[source as LeadSource] ?? source;
+            const pct = max > 0 ? Math.round((count / max) * 100) : 0;
+            return (
+              <div key={source}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[13px] font-medium truncate">{label}</span>
+                  <span className="text-[11px] tabular-nums text-muted-foreground shrink-0 ml-2">{count}</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary/60 transition-all duration-300"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
