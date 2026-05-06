@@ -2,20 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { DealForm } from "@/components/deals/DealForm";
+import { Button } from "@/components/ui/button";
 import { Plus, Briefcase, Download } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/constants";
-import { DealForm } from "@/components/deals/DealForm";
+import type { Temperature } from "@/types";
 
 interface DealRow {
   id: string;
@@ -23,6 +17,7 @@ interface DealRow {
   value: number;
   probability: number;
   contactName: string | null;
+  contactTemperature: string | null;
   stageName: string | null;
   stageColor: string | null;
   expectedClose: number | Date | null;
@@ -38,97 +33,104 @@ export default function DealsPage() {
   useEffect(() => {
     fetch("/api/deals")
       .then((res) => res.json())
-      .then((data) => {
-        setDeals(data);
-        setLoading(false);
-      });
+      .then((data) => { setDeals(data); setLoading(false); });
   }, [showForm]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Deals</h1>
-          <p className="text-muted-foreground">
-            Oportunidades de venta activas
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight">Deals</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Oportunidades de venta activas</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
+          <button
             onClick={() => window.open("/api/export?type=deals")}
-            className="cursor-pointer"
+            className="text-[12px] px-2.5 py-1.5 rounded-md font-medium bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-          <Button onClick={() => setShowForm(true)} className="cursor-pointer">
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Deal
+            <Download className="h-3.5 w-3.5" />
+            CSV
+          </button>
+          <Button size="sm" onClick={() => setShowForm(true)} className="cursor-pointer">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Nuevo deal
           </Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
-          ))}
-        </div>
+        <TableSkeleton rows={4} columns={5} />
       ) : deals.length === 0 ? (
         <EmptyState
           icon={Briefcase}
-          title="No hay deals"
-          description="Crea tu primer deal para comenzar a gestionar tu pipeline."
+          title="Sin deals aún"
+          description="Crea tu primer deal para empezar a gestionar el pipeline."
           actionLabel="Crear deal"
           onAction={() => setShowForm(true)}
         />
       ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Titulo</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Etapa</TableHead>
-                <TableHead className="hidden md:table-cell">Probabilidad</TableHead>
-                <TableHead className="hidden lg:table-cell">Cierre est.</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <div className="rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/30">
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Deal</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Contacto</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Etapa</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Prob.</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Cierre</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
               {deals.map((deal) => (
-                <TableRow
+                <tr
                   key={deal.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="hover:bg-muted/30 cursor-pointer transition-colors duration-100 group"
                   onClick={() => router.push(`/deals/${deal.id}`)}
                 >
-                  <TableCell className="font-medium">{deal.title}</TableCell>
-                  <TableCell>{deal.contactName || "-"}</TableCell>
-                  <TableCell className="font-semibold text-primary">
-                    {formatCurrency(deal.value)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
+                  <td className="px-4 py-3">
+                    <p className="text-[13px] font-medium group-hover:text-primary transition-colors">{deal.title}</p>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      {deal.contactName && (
+                        <span className="text-[13px] text-muted-foreground">{deal.contactName}</span>
+                      )}
+                      {deal.contactTemperature && (
+                        <StatusBadge temperature={deal.contactTemperature as Temperature} size="sm" />
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-[13px] font-semibold text-primary tabular-nums">
+                      {formatCurrency(deal.value)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2 py-0.5 rounded-full"
                       style={{
-                        borderColor: deal.stageColor || undefined,
+                        backgroundColor: deal.stageColor ? `${deal.stageColor}18` : undefined,
                         color: deal.stageColor || undefined,
                       }}
                     >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: deal.stageColor || "#94a3b8" }}
+                      />
                       {deal.stageName}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell text-[13px] text-muted-foreground tabular-nums">
                     {deal.probability}%
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                  </td>
+                  <td className="px-4 py-3 hidden lg:table-cell text-[12px] text-muted-foreground">
                     {formatDate(deal.expectedClose)}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
       )}
 
