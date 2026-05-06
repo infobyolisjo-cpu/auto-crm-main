@@ -48,6 +48,9 @@ export default async function DashboardPage() {
         ? Math.round((wonDeals.length / allDeals.length) * 100)
         : 0,
     hotLeads: allContacts.filter((c) => c.temperature === "hot").length,
+    newLeadsThisWeek: 0,
+    uncontactedLeads: 0,
+    leadsBySource: [],
   };
 
   const pipelineData = stages

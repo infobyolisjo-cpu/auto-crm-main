@@ -1,10 +1,18 @@
 export type Temperature = "cold" | "warm" | "hot";
 
+export type LeadStatus =
+  | "new"
+  | "contacted"
+  | "qualified"
+  | "unqualified"
+  | "lost";
+
 export type ActivityType = "call" | "email" | "meeting" | "note" | "follow_up";
 
 export type LeadSource =
   | "website"
   | "whatsapp"
+  | "whatsapp_agent_kit"
   | "instagram"
   | "linkedin"
   | "referido"
@@ -12,9 +20,11 @@ export type LeadSource =
   | "llamada_fria"
   | "email"
   | "formulario"
+  | "formulario_web"
   | "evento"
   | "import"
   | "webhook"
+  | "manual"
   | "otro";
 
 export type Channel =
@@ -39,6 +49,10 @@ export interface Contact {
   temperature: Temperature;
   score: number;
   notes: string | null;
+  status: LeadStatus;
+  interest: string | null;
+  metadata: Record<string, unknown> | null;
+  isIncomplete: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,11 +60,11 @@ export interface Contact {
 export interface Deal {
   id: string;
   title: string;
-  value: number; // in cents
+  value: number;
   stageId: string;
   contactId: string;
   expectedClose: Date | null;
-  probability: number; // 0-100
+  probability: number;
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -78,6 +92,7 @@ export interface Activity {
 
 export interface CrmConfig {
   business: {
+    name?: string;
     type: string;
     industry: string;
     teamSize: string;
@@ -98,7 +113,6 @@ export interface CrmConfig {
   };
 }
 
-// API response types
 export interface DealWithContact extends Deal {
   contact?: Contact;
   stage?: PipelineStage;
@@ -122,4 +136,7 @@ export interface DashboardStats {
   wonDealsValue: number;
   conversionRate: number;
   hotLeads: number;
+  newLeadsThisWeek: number;
+  uncontactedLeads: number;
+  leadsBySource: Array<{ source: string; count: number }>;
 }

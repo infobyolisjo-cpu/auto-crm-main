@@ -19,9 +19,12 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   llamada_fria: "Llamada fria",
   email: "Email",
   formulario: "Formulario",
+  formulario_web: "Formulario web",
   evento: "Evento",
   import: "Importado",
   webhook: "Webhook",
+  manual: "Manual",
+  whatsapp_agent_kit: "WhatsApp Agent Kit",
   otro: "Otro",
 };
 

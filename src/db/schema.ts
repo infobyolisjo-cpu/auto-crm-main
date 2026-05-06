@@ -4,6 +4,7 @@ import {
   integer,
   timestamp,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const contacts = pgTable("contacts", {
@@ -20,6 +21,10 @@ export const contacts = pgTable("contacts", {
   temperature: text("temperature").notNull().default("cold"),
   score: integer("score").notNull().default(0),
   notes: text("notes"),
+  status: text("status").notNull().default("new"),
+  interest: text("interest"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  isIncomplete: boolean("is_incomplete").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
