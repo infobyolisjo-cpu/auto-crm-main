@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { normalizeLead, ingestLead } from "@/lib/lead-intake";
-import type { LeadInput } from "@/lib/lead-intake";
+import { normalizeLead, ingestLead, type LeadInput, type IntakeResult } from "@/lib/lead-intake";
 
 // ---------------------------------------------------------------------------
 // Input schema
@@ -39,9 +38,10 @@ function parseEmailAddress(from: string): { name: string | null; email: string |
 }
 
 function extractPhoneFromText(text: string): string | null {
-  const matches = text.match(/(?:\+?52\s?)?(?:1\s?)?(?:\d[\s\-.]?){8,11}\d/g);
+  // Remove URLs first to avoid matching numbers inside them
+  const textWithoutUrls = text.replace(/https?:\/\/\S+/g, " ");
+  const matches = textWithoutUrls.match(/(?:\+?52\s?)?(?:1\s?)?(?:\d[\s\-.]?){8,11}\d/g);
   if (!matches || matches.length === 0) return null;
-
   const cleaned = matches[0].replace(/[\s\-.]/g, "");
   return cleaned.length >= 8 ? cleaned : null;
 }
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   // 4. Extract phone from body
   const phone = extractPhoneFromText(emailBody);
 
-  // 8. Check we got something useful (checked before building lead)
+  // 5. Check we got something useful (checked before building lead)
   if (!name && !email && !phone) {
     return NextResponse.json(
       {
@@ -90,10 +90,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 5. Combine subject + body into notes
+  // 6. Combine subject + body into notes
   const notes = (subject ? `Asunto: ${subject}\n\n` : "") + emailBody;
 
-  // 6. Build LeadInput
+  // 7. Build LeadInput
   const leadInput: LeadInput = {
     name: name ?? undefined,
     email: email ?? undefined,
@@ -108,11 +108,26 @@ export async function POST(req: NextRequest) {
     },
   };
 
-  // 7. Normalize and ingest
-  let result;
+  // 8. Normalize and ingest
   try {
     const normalized = normalizeLead(leadInput);
-    result = await ingestLead(normalized);
+    const result: IntakeResult = await ingestLead(normalized);
+
+    console.log("[/api/leads/email]", { action: result.action, id: result.contact.id, source: "email" });
+
+    return NextResponse.json(
+      {
+        success: true,
+        action: result.action,
+        isIncomplete: result.isIncomplete,
+        contact: {
+          id: result.contact.id,
+          name: result.contact.name,
+          email: result.contact.email,
+        },
+      },
+      { status: result.action === "created" ? 201 : 200 }
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[/api/leads/email] Error:", message);
@@ -121,24 +136,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-
-  const { contact, action, isIncomplete } = result;
-
-  console.log("[/api/leads/email]", { action, id: contact.id, source: "email" });
-
-  const statusCode = action === "created" ? 201 : 200;
-
-  return NextResponse.json(
-    {
-      success: true,
-      action,
-      isIncomplete,
-      contact: {
-        id: contact.id,
-        name: contact.name,
-        email: contact.email,
-      },
-    },
-    { status: statusCode }
-  );
 }
