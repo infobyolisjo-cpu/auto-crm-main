@@ -3,6 +3,7 @@ import {
   LeadInputSchema,
   normalizeLead,
   ingestLead,
+  IntakeResult,
 } from "@/lib/lead-intake";
 
 // ---------------------------------------------------------------------------
@@ -10,6 +11,16 @@ import {
 // ---------------------------------------------------------------------------
 
 const RATE_LIMIT_MAP = new Map<string, { count: number; resetAt: number }>();
+
+// Evict expired rate-limit entries every 5 minutes
+if (typeof setInterval !== "undefined") {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of RATE_LIMIT_MAP) {
+      if (now > entry.resetAt) RATE_LIMIT_MAP.delete(ip);
+    }
+  }, 5 * 60 * 1000);
+}
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
@@ -36,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!checkRateLimit(ip)) {
     return NextResponse.json(
       { error: "Demasiadas solicitudes. Intenta en un minuto." },
-      { status: 429 }
+      { status: 429, headers: { "Retry-After": "60" } }
     );
   }
 
@@ -75,14 +86,14 @@ export async function POST(req: NextRequest) {
   }
 
   // 7. Ingest lead
-  let result;
+  let result: IntakeResult;
   try {
     result = await ingestLead(normalized);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[/api/leads] Error:", message);
     return NextResponse.json(
-      { error: `Error al procesar lead: ${message}` },
+      { error: "Error interno al procesar el lead. Intenta de nuevo." },
       { status: 500 }
     );
   }
