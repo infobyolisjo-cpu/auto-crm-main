@@ -9,11 +9,21 @@ interface KPICardsProps {
   stats: DashboardStats;
 }
 
+interface CardItem {
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: typeof Users;
+  color: string;
+  bgColor: string;
+}
+
 export function KPICards({ stats }: KPICardsProps) {
-  const cards = [
+  const cards: CardItem[] = [
     {
       title: "Total Contactos",
       value: stats.totalContacts.toString(),
+      subtitle: `+${stats.newLeadsThisWeek} esta semana`,
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
@@ -21,6 +31,7 @@ export function KPICards({ stats }: KPICardsProps) {
     {
       title: "Deals Activos",
       value: stats.activeDeals.toString(),
+      subtitle: `Tasa cierre: ${stats.conversionRate}%`,
       icon: Briefcase,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
@@ -28,6 +39,7 @@ export function KPICards({ stats }: KPICardsProps) {
     {
       title: "Valor en Pipeline",
       value: formatCurrency(stats.totalPipelineValue),
+      subtitle: `Ganado: ${formatCurrency(stats.wonDealsValue)}`,
       icon: DollarSign,
       color: "text-green-600",
       bgColor: "bg-green-50",
@@ -35,6 +47,7 @@ export function KPICards({ stats }: KPICardsProps) {
     {
       title: "Leads Calientes",
       value: stats.hotLeads.toString(),
+      subtitle: `${stats.uncontactedLeads} sin contactar`,
       icon: Flame,
       color: "text-red-600",
       bgColor: "bg-red-50",
@@ -55,6 +68,7 @@ export function KPICards({ stats }: KPICardsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{card.value}</div>
+            <p className="text-xs text-muted-foreground mt-1">{card.subtitle}</p>
           </CardContent>
         </Card>
       ))}
