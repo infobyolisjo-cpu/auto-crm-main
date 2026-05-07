@@ -141,6 +141,8 @@ export interface NormalizedLead {
   interest: string | null;
   status: LeadStatus;
   metadata: Record<string, unknown> | null;
+  forceTemperature?: Temperature;
+  forceScore?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -339,8 +341,10 @@ export async function ingestLead(normalized: NormalizedLead): Promise<IntakeResu
   const { boost, suggestedTemperature } = scoreByKeywords(textToScore);
   const baseScoreMap: Record<Temperature, number> = { hot: 40, warm: 25, cold: 10 };
   const baseScore = baseScoreMap[suggestedTemperature];
-  const finalScore = Math.min(100, baseScore + boost);
-  const temperature = suggestedTemperature;
+  const temperature: Temperature = normalized.forceTemperature ?? suggestedTemperature;
+  const finalScore = normalized.forceScore !== undefined
+    ? normalized.forceScore
+    : Math.min(100, baseScore + boost);
 
   // Read-only query BEFORE transaction
   const stages = await db

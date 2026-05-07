@@ -74,6 +74,10 @@ const ScrapedLeadSchema = z.object({
   canal: z.string().max(50).optional(),
   campaign: z.string().max(200).optional(),
   campana: z.string().max(200).optional(),
+
+  // Scoring overrides — bypass automatic temperature/score calculation
+  force_temperature: z.enum(["cold", "warm", "hot"]).optional(),
+  force_score: z.number().int().min(0).max(100).optional(),
 });
 
 type ScrapedLead = z.infer<typeof ScrapedLeadSchema>;
@@ -189,6 +193,8 @@ export async function POST(request: NextRequest) {
   let rawLeads: unknown[] = [];
   let batchSource: string | undefined;
   let batchCampaign: string | undefined;
+  let batchForceTemperature: "cold" | "warm" | "hot" | undefined;
+  let batchForceScore: number | undefined;
 
   if (Array.isArray(body)) {
     rawLeads = body;
@@ -196,6 +202,12 @@ export async function POST(request: NextRequest) {
     const obj = body as Record<string, unknown>;
     batchSource = typeof obj.source === "string" ? obj.source : undefined;
     batchCampaign = typeof obj.campaign === "string" ? obj.campaign : undefined;
+    if (obj.force_temperature === "cold" || obj.force_temperature === "warm" || obj.force_temperature === "hot") {
+      batchForceTemperature = obj.force_temperature;
+    }
+    if (typeof obj.force_score === "number" && obj.force_score >= 0 && obj.force_score <= 100) {
+      batchForceScore = Math.round(obj.force_score);
+    }
 
     // Accept: leads / items / data wrappers
     const leadsArray = obj.leads ?? obj.items ?? obj.data;
@@ -298,7 +310,14 @@ export async function POST(request: NextRequest) {
 
     // --- Ingest via shared pipeline (handles email/phone dedup, scoring, deal/activity creation) ---
     try {
-      const normalized = normalizeLead(input);
+      const normalizedBase = normalizeLead(input);
+      const forceTemperature = lead.force_temperature ?? batchForceTemperature;
+      const forceScore = lead.force_score ?? batchForceScore;
+      const normalized = {
+        ...normalizedBase,
+        ...(forceTemperature !== undefined ? { forceTemperature } : {}),
+        ...(forceScore !== undefined ? { forceScore } : {}),
+      };
       const result = await ingestLead(normalized);
 
       if (result.action === "created") imported++;
