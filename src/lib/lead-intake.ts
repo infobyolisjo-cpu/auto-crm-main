@@ -9,6 +9,7 @@ import { eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, deals, activities, pipelineStages } from "@/db/schema";
 import type { Temperature, LeadSource, Channel, LeadStatus } from "@/types";
+import { notifyAdminHotLead } from "@/lib/admin-notify";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -502,6 +503,9 @@ export async function ingestLead(normalized: NormalizedLead): Promise<IntakeResu
 
     return { contact: newContact, action: "created" as const, isIncomplete, deal: newDeal };
   });
+
+  // Fire-and-forget — runs outside the transaction, never blocks or throws
+  void notifyAdminHotLead(result);
 
   return result;
 }
