@@ -70,6 +70,8 @@ const ScrapedLeadSchema = z.object({
   // Per-lead routing overrides (batch-level source/campaign take lower priority)
   source: z.string().max(50).optional(),
   fuente: z.string().max(50).optional(),
+  channel: z.string().max(50).optional(),
+  canal: z.string().max(50).optional(),
   campaign: z.string().max(200).optional(),
   campana: z.string().max(200).optional(),
 });
@@ -147,7 +149,7 @@ function buildLeadInput(
     company: lead.company ?? lead.empresa,
     notes,
     source: lead.source ?? lead.fuente ?? batchSource ?? "scraping",
-    channel: "web",
+    channel: lead.channel ?? lead.canal ?? "web",
     campaign: lead.campaign ?? lead.campana ?? batchCampaign,
     interest: lead.interest ?? lead.interes,
     metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
