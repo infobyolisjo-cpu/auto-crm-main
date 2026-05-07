@@ -128,6 +128,29 @@
   --warning-foreground: #ffffff;
 }
 
+/* ── Suppress all browser/extension translation widgets ──────────────────── */
+#MicrosoftTranslatorWidget,
+#TranslatorFloatWindowDiv,
+#WidgetFloatDiv,
+#ms-translator-widget,
+#translateWidgetIframe,
+[id*="MicrosoftTranslat"],
+[class*="microsoftTranslat"],
+[id*="BingTranslat"],
+.skiptranslate,
+.goog-te-banner-frame,
+.goog-te-menu-frame,
+#google_translate_element,
+body > iframe[src*="translate"],
+body > div[id*="translate"]:not([id*="notranslate"]) {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
