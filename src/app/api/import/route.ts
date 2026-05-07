@@ -1,59 +1,87 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { contacts } from "@/db/schema";
+import { LeadInputSchema, normalizeLead, ingestLead } from "@/lib/lead-intake";
 
 export async function POST(request: NextRequest) {
-  let body;
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "JSON invalido" }, { status: 400 });
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
-  const { contacts: contactList } = body;
 
-  if (!Array.isArray(contactList) || contactList.length === 0) {
+  if (
+    typeof body !== "object" ||
+    body === null ||
+    !Array.isArray((body as Record<string, unknown>).contacts)
+  ) {
     return NextResponse.json(
-      { error: "Se requiere un array de contactos" },
+      { error: "Se requiere { contacts: [...] }" },
+      { status: 400 }
+    );
+  }
+
+  const contactList = (body as Record<string, unknown>).contacts as unknown[];
+
+  if (contactList.length === 0) {
+    return NextResponse.json(
+      { error: "La lista de contactos está vacía" },
       { status: 400 }
     );
   }
 
   const results = {
     imported: 0,
+    updated: 0,
     failed: 0,
     errors: [] as string[],
   };
 
-  for (const contact of contactList) {
-    if (!contact.name) {
+  for (const raw of contactList) {
+    const parsed = LeadInputSchema.safeParse(raw);
+
+    if (!parsed.success) {
       results.failed++;
-      results.errors.push(`Contacto sin nombre: ${JSON.stringify(contact)}`);
+      const nameHint =
+        typeof raw === "object" && raw !== null && "name" in raw
+          ? String((raw as Record<string, unknown>).name)
+          : "desconocido";
+      results.errors.push(
+        `Datos inválidos para "${nameHint}": ${parsed.error.issues[0]?.message ?? "error de validación"}`
+      );
+      continue;
+    }
+
+    // Ensure source defaults to "import" for CSV/bulk imports
+    if (!parsed.data.source && !parsed.data.fuente) {
+      parsed.data.source = "import";
+    }
+
+    const normalized = normalizeLead(parsed.data);
+
+    if (!normalized.name) {
+      results.failed++;
+      results.errors.push(`Contacto sin nombre válido — omitido`);
       continue;
     }
 
     try {
-      await db.insert(contacts).values({
-        name: contact.name,
-        email: contact.email || null,
-        phone: contact.phone || null,
-        company: contact.company || null,
-        source: contact.source || "import",
-        channel: contact.channel || null,
-        campaign: contact.campaign || null,
-        temperature: contact.temperature || "cold",
-        score: contact.score || 0,
-        notes: contact.notes || null,
-      });
-      results.imported++;
+      const result = await ingestLead(normalized);
+      if (result.action === "created") {
+        results.imported++;
+      } else {
+        results.updated++;
+      }
     } catch (error) {
       results.failed++;
       results.errors.push(
-        `Error importando ${contact.name}: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Error importando "${normalized.name}": ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
   }
 
-  return NextResponse.json(results, {
-    status: results.failed > 0 ? 207 : 201,
-  });
+  const status =
+    results.failed > 0 && results.imported === 0 && results.updated === 0
+      ? 422
+      : 200;
+  return NextResponse.json(results, { status });
 }
