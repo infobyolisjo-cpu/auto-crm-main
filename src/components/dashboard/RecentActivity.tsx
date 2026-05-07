@@ -27,7 +27,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
 
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 mb-4">
         Actividad Reciente
       </p>
       {displayed.length === 0 ? (
@@ -45,7 +45,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               </div>
               {/* Content */}
               <div className="flex-1 min-w-0 pb-3">
-                <p className="text-[11px] uppercase text-muted-foreground/60 font-medium leading-none mb-0.5">
+                <p className="text-[11px] uppercase text-foreground/40 font-medium leading-none mb-0.5">
                   {TYPE_LABELS[activity.type] ?? activity.type}
                 </p>
                 <p className="text-[13px] font-medium truncate leading-snug">

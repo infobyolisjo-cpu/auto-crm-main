@@ -14,7 +14,7 @@ export function PipelineChart({ data }: { data: StageData[] }) {
 
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 mb-4">
         Pipeline de Ventas
       </p>
       {data.length === 0 ? (
@@ -27,7 +27,7 @@ export function PipelineChart({ data }: { data: StageData[] }) {
               <div key={stage.name}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[13px] font-medium truncate max-w-[55%]">{stage.name}</span>
-                  <span className="text-[12px] text-muted-foreground tabular-nums shrink-0 ml-2">
+                  <span className="text-[12px] text-foreground/55 tabular-nums shrink-0 ml-2">
                     {stage.count} deal{stage.count !== 1 ? "s" : ""}
                     {stage.value > 0 && (
                       <span className="ml-1.5 font-medium text-foreground">· {formatCurrency(stage.value)}</span>

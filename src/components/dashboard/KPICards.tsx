@@ -50,15 +50,15 @@ export function KPICards({ stats }: KPICardsProps) {
             className="rounded-xl border border-border bg-card px-4 py-4 hover:shadow-sm transition-shadow duration-150"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50">
                 {card.label}
               </span>
-              <Icon className="h-3.5 w-3.5 text-muted-foreground/60" />
+              <Icon className="h-3.5 w-3.5 text-foreground/35" />
             </div>
-            <div className="text-2xl font-bold tracking-tight text-foreground">{card.value}</div>
+            <div className="text-3xl font-bold tracking-tight text-foreground">{card.value}</div>
             <div className="flex items-center gap-1 mt-1.5">
               {card.positive && <TrendingUp className="h-3 w-3 text-emerald-500 shrink-0" />}
-              <span className="text-[11px] text-muted-foreground">{card.sub}</span>
+              <span className="text-[11px] text-foreground/55">{card.sub}</span>
             </div>
           </div>
         );

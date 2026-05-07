@@ -128,7 +128,7 @@ export default function ActivitiesPage() {
 
       {/* Timeline */}
       <div className="rounded-xl border border-border bg-card px-4 py-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 mb-4">
           Todas las actividades
         </p>
         {allActivities.length === 0 ? (

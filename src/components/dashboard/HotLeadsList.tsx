@@ -19,11 +19,11 @@ export function HotLeadsList({ leads }: { leads: HotLead[] }) {
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-4">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
           <Flame className="h-3.5 w-3.5 text-red-500" />
           Leads calientes
         </p>
-        <span className="text-[11px] text-muted-foreground tabular-nums">{leads.length}</span>
+        <span className="text-[11px] text-foreground/50 tabular-nums font-medium">{leads.length}</span>
       </div>
 
       {leads.length === 0 ? (
@@ -46,7 +46,7 @@ export function HotLeadsList({ leads }: { leads: HotLead[] }) {
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[11px] tabular-nums text-muted-foreground">{lead.score}</span>
+                <span className="text-[11px] tabular-nums text-foreground/50 font-medium">{lead.score}</span>
                 {lead.phone ? (
                   <a
                     href={`https://wa.me/${cleanPhoneForWhatsApp(lead.phone)}`}

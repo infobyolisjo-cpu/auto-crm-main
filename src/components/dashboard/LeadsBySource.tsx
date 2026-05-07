@@ -13,7 +13,7 @@ export function LeadsBySource({ data }: LeadsBySourceProps) {
 
   return (
     <div className="rounded-xl border border-border bg-card px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 mb-4">
         Leads por Fuente
       </p>
       {sorted.length === 0 ? (
@@ -27,7 +27,7 @@ export function LeadsBySource({ data }: LeadsBySourceProps) {
               <div key={source}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[13px] font-medium truncate">{label}</span>
-                  <span className="text-[11px] tabular-nums text-muted-foreground shrink-0 ml-2">{count}</span>
+                  <span className="text-[11px] tabular-nums text-foreground/55 font-medium shrink-0 ml-2">{count}</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                   <div

@@ -93,12 +93,12 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/30">
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground w-[35%]">Contacto</th>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Empresa</th>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Origen</th>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Estado</th>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Score</th>
-              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Agregado</th>
+              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 w-[35%]">Contacto</th>
+              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden sm:table-cell">Empresa</th>
+              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden md:table-cell">Origen</th>
+              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50">Estado</th>
+              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden md:table-cell">Score</th>
+              <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden lg:table-cell">Agregado</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -128,11 +128,11 @@ export function ContactsTable({ contacts }: ContactsTableProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden sm:table-cell text-[13px] text-muted-foreground">
+                  <td className="px-4 py-3 hidden sm:table-cell text-[13px] text-foreground/65">
                     {contact.company || "—"}
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="text-[12px] text-muted-foreground">
+                    <span className="text-[12px] text-foreground/60">
                       {SOURCE_LABELS[contact.source as LeadSource] || contact.source}
                     </span>
                   </td>

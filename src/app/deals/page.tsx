@@ -73,12 +73,12 @@ export default function DealsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Deal</th>
-                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell">Contacto</th>
-                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor</th>
-                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Etapa</th>
-                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell">Prob.</th>
-                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Cierre</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50">Deal</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden sm:table-cell">Contacto</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50">Valor</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50">Etapa</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden md:table-cell">Prob.</th>
+                <th className="text-left px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 hidden lg:table-cell">Cierre</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -94,7 +94,7 @@ export default function DealsPage() {
                   <td className="px-4 py-3 hidden sm:table-cell">
                     <div className="flex items-center gap-2">
                       {deal.contactName && (
-                        <span className="text-[13px] text-muted-foreground">{deal.contactName}</span>
+                        <span className="text-[13px] text-foreground/65">{deal.contactName}</span>
                       )}
                       {deal.contactTemperature && (
                         <StatusBadge temperature={deal.contactTemperature as Temperature} size="sm" />
@@ -121,10 +121,10 @@ export default function DealsPage() {
                       {deal.stageName}
                     </span>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-[13px] text-muted-foreground tabular-nums">
+                  <td className="px-4 py-3 hidden md:table-cell text-[13px] text-foreground/60 tabular-nums">
                     {deal.probability}%
                   </td>
-                  <td className="px-4 py-3 hidden lg:table-cell text-[12px] text-muted-foreground">
+                  <td className="px-4 py-3 hidden lg:table-cell text-[12px] text-foreground/55">
                     {formatDate(deal.expectedClose)}
                   </td>
                 </tr>
