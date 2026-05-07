@@ -97,6 +97,12 @@ export async function DELETE(
     );
   }
 
-  await db.delete(contacts).where(eq(contacts.id, id));
+  // Cascade delete: remove related records before deleting the contact
+  await db.transaction(async (tx) => {
+    await tx.delete(activities).where(eq(activities.contactId, id));
+    await tx.delete(deals).where(eq(deals.contactId, id));
+    await tx.delete(contacts).where(eq(contacts.id, id));
+  });
+
   return NextResponse.json({ success: true });
 }
