@@ -25,6 +25,7 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   webhook: "Webhook",
   manual: "Manual",
   whatsapp_agent_kit: "WhatsApp Agent Kit",
+  scraping: "Scraping",
   otro: "Otro",
 };
 

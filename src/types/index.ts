@@ -13,6 +13,7 @@ export type LeadSource =
   | "website"
   | "whatsapp"
   | "whatsapp_agent_kit"
+  | "scraping"
   | "instagram"
   | "linkedin"
   | "referido"

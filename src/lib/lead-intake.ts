@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod";
-import { eq, or } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { contacts, deals, activities, pipelineStages } from "@/db/schema";
 import type { Temperature, LeadSource, Channel, LeadStatus } from "@/types";
@@ -14,10 +14,23 @@ import type { Temperature, LeadSource, Channel, LeadStatus } from "@/types";
 // Constants
 // ---------------------------------------------------------------------------
 
+const JUNK_NAMES = new Set([
+  "sin nombre",
+  "alguien",
+  "n/a",
+  "na",
+  "none",
+  "null",
+  "undefined",
+  "test",
+  "prueba",
+]);
+
 export const VALID_SOURCES: LeadSource[] = [
   "website",
   "whatsapp",
   "whatsapp_agent_kit",
+  "scraping",
   "instagram",
   "linkedin",
   "referido",
@@ -145,9 +158,10 @@ export interface IntakeResult {
 // ---------------------------------------------------------------------------
 
 export function normalizeLead(input: LeadInput): NormalizedLead {
-  // name
+  // name — reject junk values
   const rawName = input.name ?? input.nombre ?? null;
-  const name = rawName?.trim() || null;
+  const trimmedName = rawName?.trim() || null;
+  const name = trimmedName && !JUNK_NAMES.has(trimmedName.toLowerCase()) ? trimmedName : null;
 
   // email — prefer `email`, fall back to `correo`
   const rawEmail = input.email ?? input.correo ?? null;
@@ -363,6 +377,16 @@ export async function ingestLead(normalized: NormalizedLead): Promise<IntakeResu
           .limit(1);
         existing = rows[0] ?? null;
       }
+    }
+
+    // Name-based dedup fallback: when no email or phone, match by exact name (case-insensitive)
+    if (!existing && !email && !phone && name) {
+      const rows = await tx
+        .select()
+        .from(contacts)
+        .where(sql`lower(${contacts.name}) = lower(${name})`)
+        .limit(1);
+      existing = rows[0] ?? null;
     }
 
     if (existing) {
