@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts } from "@/db/schema";
+import { noStoreJson } from "@/lib/security";
 import { eq, like, or, desc } from "drizzle-orm";
+
+function isDatabaseTimeout(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+
+  const maybeError = error as { code?: unknown; message?: unknown; cause?: unknown };
+  const code = typeof maybeError.code === "string" ? maybeError.code : "";
+  const message = typeof maybeError.message === "string" ? maybeError.message : "";
+
+  return (
+    code === "CONNECT_TIMEOUT" ||
+    message.toLowerCase().includes("connect_timeout") ||
+    message.toLowerCase().includes("timeout") ||
+    isDatabaseTimeout(maybeError.cause)
+  );
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -29,8 +45,24 @@ export async function GET(request: NextRequest) {
     query = query.where(eq(contacts.source, source)) as typeof query;
   }
 
-  const results = await query.orderBy(desc(contacts.createdAt));
-  return NextResponse.json(results);
+  try {
+    const results = await query.orderBy(desc(contacts.createdAt));
+    return NextResponse.json(results);
+  } catch (error) {
+    console.error("[contacts] Database query failed", error);
+
+    if (isDatabaseTimeout(error)) {
+      return noStoreJson(
+        {
+          error: "DATABASE_UNAVAILABLE",
+          message: "Database connection timeout in Preview",
+        },
+        { status: 503 }
+      );
+    }
+
+    return noStoreJson({ error: "Error al obtener contactos" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

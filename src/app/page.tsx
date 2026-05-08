@@ -17,10 +17,8 @@ function getWeekAgo(): Date {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 }
 
-export default async function DashboardPage() {
-  const weekAgo = getWeekAgo();
-
-  const [allContacts, allDeals, stages, recentActivities, contactsWithActivities, newLeadsThisWeek] = await Promise.all([
+async function loadDashboardData(weekAgo: Date) {
+  return Promise.all([
     db.select().from(contacts),
     db.select().from(deals),
     db.select().from(pipelineStages).orderBy(asc(pipelineStages.order)),
@@ -39,6 +37,35 @@ export default async function DashboardPage() {
     db.selectDistinct({ contactId: activities.contactId }).from(activities),
     db.select({ id: contacts.id }).from(contacts).where(gte(contacts.createdAt, weekAgo)),
   ]);
+}
+
+export default async function DashboardPage() {
+  const weekAgo = getWeekAgo();
+
+  let dashboardData: Awaited<ReturnType<typeof loadDashboardData>>;
+
+  try {
+    dashboardData = await loadDashboardData(weekAgo);
+  } catch (error) {
+    console.error("[dashboard] Database connection failed", error);
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Resumen de tu pipeline de ventas</p>
+        </div>
+
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6">
+          <p className="text-sm font-medium">
+            Database connection failed in Preview. CRM auth is working, but DB is unavailable.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const [allContacts, allDeals, stages, recentActivities, contactsWithActivities, newLeadsThisWeek] = dashboardData;
 
   const activeDeals = allDeals.filter((d) => {
     const stage = stages.find((s) => s.id === d.stageId);
