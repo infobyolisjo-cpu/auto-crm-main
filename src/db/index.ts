@@ -36,7 +36,7 @@ const client = postgres(DATABASE_URL, {
   ssl: isLocalhost ? false : "require",
   max: 1, // Vercel Fluid Compute: 1 connection per instance
   idle_timeout: 20,
-  connect_timeout: 10,
+  connect_timeout: 30,
 });
 
 export const db = drizzle(client, { schema });
