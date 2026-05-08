@@ -5,6 +5,8 @@ import { KanbanBoard } from "@/components/pipeline/KanbanBoard";
 import type { PipelineColumn } from "@/types";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export default async function PipelinePage() {
   const [stages, allDeals] = await Promise.all([

@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
   LeadInputSchema,
   normalizeLead,
   ingestLead,
 } from "@/lib/lead-intake";
+import { noStoreJson, verifySharedSecret } from "@/lib/security";
 
 // Field name mapping for Typeform / Tally / custom webhook payloads
 const FIELD_MAP: Record<string, string> = {
@@ -71,16 +72,19 @@ function extractFields(payload: Record<string, unknown>): Record<string, unknown
 }
 
 export async function POST(request: NextRequest) {
-  // Auth check
-  const secret = process.env.WEBHOOK_SECRET;
-  if (secret) {
-    const headerSecret = request.headers.get("x-webhook-secret");
-    if (!headerSecret || headerSecret !== secret) {
-      return NextResponse.json(
-        { error: "Unauthorized — header x-webhook-secret inválido o faltante" },
-        { status: 401 }
-      );
-    }
+  const auth = verifySharedSecret(request, {
+    envNames: ["OUTREACH_SECRET", "WEBHOOK_SECRET"],
+    headerNames: ["x-outreach-secret", "x-webhook-secret"],
+  });
+
+  if (!auth.ok) {
+    return noStoreJson(
+      {
+        error: auth.error,
+        hint: "Envia x-outreach-secret. x-webhook-secret se acepta temporalmente para compatibilidad.",
+      },
+      { status: auth.status }
+    );
   }
 
   // Parse payload
@@ -88,7 +92,7 @@ export async function POST(request: NextRequest) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    return noStoreJson({ error: "JSON inválido" }, { status: 400 });
   }
 
   // Extract and map field names
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest) {
 
   // Require at least a name
   if (!raw.name) {
-    return NextResponse.json(
+    return noStoreJson(
       {
         error: "El campo 'name' (o 'nombre') es requerido",
         received_keys: Object.keys(payload),
@@ -112,7 +116,7 @@ export async function POST(request: NextRequest) {
   // Validate + normalize via shared schema
   const parsed = LeadInputSchema.safeParse(raw);
   if (!parsed.success) {
-    return NextResponse.json(
+    return noStoreJson(
       { error: "Datos inválidos", details: parsed.error.flatten() },
       { status: 400 }
     );
@@ -123,7 +127,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await ingestLead(normalized);
 
-    return NextResponse.json(
+    return noStoreJson(
       {
         success: true,
         action: result.action,
@@ -144,6 +148,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("[webhook] Error al ingestar lead", { error: msg });
-    return NextResponse.json({ error: `Error al procesar lead: ${msg}` }, { status: 500 });
+    return noStoreJson({ error: `Error al procesar lead: ${msg}` }, { status: 500 });
   }
 }

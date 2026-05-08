@@ -10,6 +10,8 @@ import { HotLeadsList } from "@/components/dashboard/HotLeadsList";
 import type { DashboardStats } from "@/types";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 function getWeekAgo(): Date {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
