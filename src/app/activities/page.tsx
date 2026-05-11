@@ -49,10 +49,10 @@ export default function ActivitiesPage() {
       apiFetch("/api/activities").then((r) => r.json()),
       apiFetch("/api/followups").then((r) => r.json()),
     ]).then(([acts, fups]) => {
-      setActivities(acts);
-      setFollowUps(fups);
+      setActivities(Array.isArray(acts) ? acts : []);
+      setFollowUps(fups && Array.isArray(fups.overdue) ? fups : null);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   };
 
   useEffect(() => { loadData(); }, []);

@@ -55,7 +55,7 @@ export function ActivityForm({
     if (open && !preselectedContactId) {
       apiFetch("/api/contacts")
         .then((r) => r.json())
-        .then(setContacts);
+        .then((d) => { if (Array.isArray(d)) setContacts(d); });
     }
   }, [open, preselectedContactId]);
 

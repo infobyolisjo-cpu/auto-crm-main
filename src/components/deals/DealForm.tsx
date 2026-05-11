@@ -49,8 +49,8 @@ export function DealForm({ open, onClose }: DealFormProps) {
 
   useEffect(() => {
     if (open) {
-      apiFetch("/api/contacts").then((r) => r.json()).then(setContacts);
-      apiFetch("/api/pipeline").then((r) => r.json()).then(setStages);
+      apiFetch("/api/contacts").then((r) => r.json()).then((d) => { if (Array.isArray(d)) setContacts(d); });
+      apiFetch("/api/pipeline").then((r) => r.json()).then((d) => { if (Array.isArray(d)) setStages(d); });
     }
   }, [open]);
 

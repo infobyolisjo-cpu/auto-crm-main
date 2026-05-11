@@ -17,7 +17,8 @@ export default function ContactsPage() {
   const loadContacts = () => {
     apiFetch("/api/contacts")
       .then((res) => res.json())
-      .then((data) => { setContacts(data); setLoading(false); });
+      .then((data) => { setContacts(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
   };
 
   useEffect(() => { loadContacts(); }, []);

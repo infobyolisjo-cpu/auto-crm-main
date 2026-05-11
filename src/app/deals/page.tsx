@@ -34,7 +34,8 @@ export default function DealsPage() {
   useEffect(() => {
     apiFetch("/api/deals")
       .then((res) => res.json())
-      .then((data) => { setDeals(data); setLoading(false); });
+      .then((data) => { setDeals(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, [showForm]);
 
   return (
