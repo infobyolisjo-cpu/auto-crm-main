@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { deals } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkCrmAuth } from "@/lib/auth";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   const { id } = await params;
 
   const [deal] = await db.select().from(deals).where(eq(deals.id, id));
@@ -22,6 +26,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   const { id } = await params;
 
   let body;
@@ -60,9 +67,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   const { id } = await params;
 
   const [existing] = await db.select().from(deals).where(eq(deals.id, id));

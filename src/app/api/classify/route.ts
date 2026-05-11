@@ -4,8 +4,12 @@ import { contacts, activities } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { classifyLead, isAIEnabled } from "@/lib/claude";
 import { calculateLeadScore, suggestTemperature } from "@/lib/scoring";
+import { checkCrmAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   let body;
   try {
     body = await request.json();

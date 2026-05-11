@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api-fetch";
 
 export function NotificationChecker() {
   const checkFollowUps = useCallback(async () => {
@@ -10,7 +11,7 @@ export function NotificationChecker() {
     if (Notification.permission !== "granted") return;
 
     try {
-      const res = await fetch("/api/followups");
+      const res = await apiFetch("/api/followups");
       const data = await res.json();
       const overdueCount = data.overdue?.length || 0;
 

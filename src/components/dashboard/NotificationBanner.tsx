@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AlertCircle, Clock, ArrowRight } from "lucide-react";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface FollowUpData {
   overdue: unknown[];
@@ -13,14 +14,17 @@ interface FollowUpData {
 
 export function NotificationBanner() {
   const [data, setData] = useState<FollowUpData | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/followups")
+    apiFetch("/api/followups")
       .then((r) => r.json())
-      .then(setData)
-      .catch(() => {});
+      .then((d) => { setData(d); setLoaded(true); })
+      .catch(() => setLoaded(true));
   }, []);
 
+  // Reserve no space until loaded — return empty fragment (not null) to avoid layout shift
+  if (!loaded) return <></>;
   if (!data) return null;
 
   const overdueCount = data.overdue.length;

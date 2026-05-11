@@ -1,9 +1,10 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { contacts, deals, pipelineStages } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
 import { formatDate, formatCurrency, SOURCE_LABELS } from "@/lib/constants";
 import type { LeadSource } from "@/types";
+import { checkCrmAuth } from "@/lib/auth";
 
 function escapeCSV(value: string | null | undefined): string {
   if (value === null || value === undefined) return "";
@@ -21,6 +22,9 @@ function buildCSV(headers: string[], rows: string[][]): string {
 }
 
 export async function GET(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied as NextResponse;
+
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") || "contacts";
   const today = new Date().toISOString().split("T")[0];

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-fetch";
 
 const contactSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
@@ -76,7 +77,7 @@ export function ContactForm({ open, onClose, initialData }: ContactFormProps) {
         : "/api/contacts";
       const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

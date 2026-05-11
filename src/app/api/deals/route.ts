@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { deals, contacts, pipelineStages } from "@/db/schema";
 import { eq, desc, asc } from "drizzle-orm";
+import { checkCrmAuth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
   const results = await db
     .select({
       id: deals.id,
@@ -34,6 +37,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   let body;
   try {
     body = await request.json();

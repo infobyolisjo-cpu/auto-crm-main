@@ -7,6 +7,7 @@ import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Contact } from "@/types";
+import { apiFetch } from "@/lib/api-fetch";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -14,7 +15,7 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
 
   const loadContacts = () => {
-    fetch("/api/contacts")
+    apiFetch("/api/contacts")
       .then((res) => res.json())
       .then((data) => { setContacts(data); setLoading(false); });
   };

@@ -16,6 +16,7 @@ import { KanbanColumn } from "./KanbanColumn";
 import { DealCard } from "./DealCard";
 import { toast } from "sonner";
 import type { PipelineColumn } from "@/types";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface KanbanBoardProps {
   initialColumns: PipelineColumn[];
@@ -99,7 +100,7 @@ export function KanbanBoard({ initialColumns }: KanbanBoardProps) {
 
       // Update the deal's stage via API
       try {
-        const res = await fetch("/api/pipeline", {
+        const res = await apiFetch("/api/pipeline", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -28,6 +28,7 @@ import { formatCurrency, formatDate, formatRelativeDate, cleanPhoneForWhatsApp }
 import { ACTIVITY_TYPE_CONFIG, SOURCE_LABELS } from "@/lib/constants";
 import { toast } from "sonner";
 import type { Temperature, ActivityType, LeadSource } from "@/types";
+import { apiFetch } from "@/lib/api-fetch";
 
 const activityIcons: Record<string, typeof Phone> = {
   call: Phone,
@@ -96,7 +97,7 @@ export function ContactDetailClient({
     }
 
     try {
-      const res = await fetch(`/api/contacts/${contact.id}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/contacts/${contact.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Error al eliminar");
       toast.success("Contacto eliminado");
       router.push("/contacts");
@@ -107,7 +108,7 @@ export function ContactDetailClient({
 
   const handleCompleteActivity = async (activityId: string) => {
     try {
-      const res = await fetch(`/api/activities/${activityId}`, {
+      const res = await apiFetch(`/api/activities/${activityId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completedAt: new Date().toISOString() }),

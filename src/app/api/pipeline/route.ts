@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { pipelineStages, deals, contacts } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
+import { checkCrmAuth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
   const [stages, allDeals] = await Promise.all([
     db.select().from(pipelineStages).orderBy(asc(pipelineStages.order)),
     db
@@ -34,6 +37,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   let body;
   try {
     body = await request.json();

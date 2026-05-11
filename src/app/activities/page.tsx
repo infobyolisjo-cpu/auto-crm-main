@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { formatRelativeDate, formatDate, ACTIVITY_TYPE_CONFIG } from "@/lib/constants";
 import type { ActivityType } from "@/types";
+import { apiFetch } from "@/lib/api-fetch";
 
 const TYPE_CONFIG: Record<string, { icon: typeof Phone; color: string }> = {
   call:      { icon: Phone,    color: "#3b82f6" },
@@ -45,8 +46,8 @@ export default function ActivitiesPage() {
 
   const loadData = () => {
     Promise.all([
-      fetch("/api/activities").then((r) => r.json()),
-      fetch("/api/followups").then((r) => r.json()),
+      apiFetch("/api/activities").then((r) => r.json()),
+      apiFetch("/api/followups").then((r) => r.json()),
     ]).then(([acts, fups]) => {
       setActivities(acts);
       setFollowUps(fups);

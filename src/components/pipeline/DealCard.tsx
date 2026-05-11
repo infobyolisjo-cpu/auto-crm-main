@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/constants";
+import { apiFetch } from "@/lib/api-fetch";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import type { Temperature } from "@/types";
 
@@ -46,7 +47,7 @@ export function DealCard({ id, title, value: initialValue, contactName, contactT
     const prev = value;
     setValue(newCents);
     try {
-      const res = await fetch(`/api/deals/${id}`, {
+      const res = await apiFetch(`/api/deals/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: newCents }),

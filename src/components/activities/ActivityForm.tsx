@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-fetch";
 
 const activitySchema = z.object({
   type: z.enum(["call", "email", "meeting", "note", "follow_up"]),
@@ -52,7 +53,7 @@ export function ActivityForm({
 
   useEffect(() => {
     if (open && !preselectedContactId) {
-      fetch("/api/contacts")
+      apiFetch("/api/contacts")
         .then((r) => r.json())
         .then(setContacts);
     }
@@ -78,7 +79,7 @@ export function ActivityForm({
 
   const onSubmit = async (data: ActivityFormData) => {
     try {
-      const res = await fetch("/api/activities", {
+      const res = await apiFetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

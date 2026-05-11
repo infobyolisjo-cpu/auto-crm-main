@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Briefcase, Download } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import type { Temperature } from "@/types";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface DealRow {
   id: string;
@@ -31,7 +32,7 @@ export default function DealsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/deals")
+    apiFetch("/api/deals")
       .then((res) => res.json())
       .then((data) => { setDeals(data); setLoading(false); });
   }, [showForm]);
@@ -45,7 +46,16 @@ export default function DealsPage() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => window.open("/api/export?type=deals")}
+            onClick={async () => {
+                const res = await apiFetch("/api/export?type=deals");
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `deals-${new Date().toISOString().split("T")[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
             className="text-[12px] px-2.5 py-1.5 rounded-md font-medium bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" />

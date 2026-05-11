@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-fetch";
 
 const dealSchema = z.object({
   title: z.string().min(1, "El titulo es requerido"),
@@ -48,8 +49,8 @@ export function DealForm({ open, onClose }: DealFormProps) {
 
   useEffect(() => {
     if (open) {
-      fetch("/api/contacts").then((r) => r.json()).then(setContacts);
-      fetch("/api/pipeline").then((r) => r.json()).then(setStages);
+      apiFetch("/api/contacts").then((r) => r.json()).then(setContacts);
+      apiFetch("/api/pipeline").then((r) => r.json()).then(setStages);
     }
   }, [open]);
 
@@ -75,7 +76,7 @@ export function DealForm({ open, onClose }: DealFormProps) {
 
   const onSubmit = async (data: DealFormData) => {
     try {
-      const res = await fetch("/api/deals", {
+      const res = await apiFetch("/api/deals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

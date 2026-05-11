@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { NotificationToggle } from "@/components/shared/NotificationToggle";
 import type { CrmConfig } from "@/types";
+import { apiFetch } from "@/lib/api-fetch";
 
 export default function SettingsPage() {
   const [config, setConfig] = useState<CrmConfig | null>(null);
@@ -29,7 +30,7 @@ export default function SettingsPage() {
       .then(setConfig)
       .catch(() => {});
 
-    fetch("/api/pipeline")
+    apiFetch("/api/pipeline")
       .then((r) => r.json())
       .then(setStages);
   }, []);

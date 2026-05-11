@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { contacts } from "@/db/schema";
 import { noStoreJson } from "@/lib/security";
 import { eq, like, or, desc } from "drizzle-orm";
+import { checkCrmAuth } from "@/lib/auth";
 
 function isDatabaseTimeout(error: unknown): boolean {
   if (typeof error !== "object" || error === null) return false;
@@ -20,6 +21,8 @@ function isDatabaseTimeout(error: unknown): boolean {
 }
 
 export async function GET(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const temperature = searchParams.get("temperature");
@@ -66,6 +69,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   let body;
   try {
     body = await request.json();

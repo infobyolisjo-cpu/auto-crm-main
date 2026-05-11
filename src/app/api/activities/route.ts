@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { activities, contacts } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { checkCrmAuth } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
   const { searchParams } = new URL(request.url);
   const contactId = searchParams.get("contactId");
   const dealId = searchParams.get("dealId");
@@ -36,6 +39,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   let body;
   try {
     body = await request.json();

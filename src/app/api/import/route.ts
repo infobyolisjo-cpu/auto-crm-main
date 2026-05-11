@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LeadInputSchema, normalizeLead, ingestLead } from "@/lib/lead-intake";
+import { checkCrmAuth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const denied = checkCrmAuth(request);
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();
