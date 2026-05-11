@@ -19,7 +19,10 @@ export function NotificationBanner() {
   useEffect(() => {
     apiFetch("/api/followups")
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoaded(true); })
+      .then((d) => {
+        if (Array.isArray(d?.overdue)) setData(d);
+        setLoaded(true);
+      })
       .catch(() => setLoaded(true));
   }, []);
 
@@ -27,8 +30,8 @@ export function NotificationBanner() {
   if (!loaded) return <></>;
   if (!data) return null;
 
-  const overdueCount = data.overdue.length;
-  const todayCount = data.today.length;
+  const overdueCount = data.overdue?.length ?? 0;
+  const todayCount = data.today?.length ?? 0;
 
   if (overdueCount === 0 && todayCount === 0) return null;
 

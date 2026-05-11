@@ -23,8 +23,11 @@ export default function SettingsPage() {
   const [stages, setStages] = useState<
     Array<{ id: string; name: string; color: string; order: number }>
   >([]);
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
+    setOrigin(window.location.origin);
+
     fetch("/crm-config.json")
       .then((r) => r.json())
       .then(setConfig)
@@ -32,7 +35,7 @@ export default function SettingsPage() {
 
     apiFetch("/api/pipeline")
       .then((r) => r.json())
-      .then(setStages);
+      .then((data) => { if (Array.isArray(data)) setStages(data); });
   }, []);
 
   const commands = [
@@ -164,12 +167,12 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-sm bg-muted p-2 rounded font-mono truncate">
-                  POST {typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/api/webhook
+                  POST {origin || "http://localhost:3000"}/api/webhook
                 </code>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      `${window.location.origin}/api/webhook`
+                      `${origin || window.location.origin}/api/webhook`
                     );
                     toast.success("URL copiada");
                   }}
@@ -181,7 +184,7 @@ export default function SettingsPage() {
               </div>
               <div className="p-3 rounded-lg bg-muted/50 text-xs font-mono">
                 <p className="text-muted-foreground mb-1">Ejemplo:</p>
-                <p>curl -X POST {typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/api/webhook \</p>
+                <p>curl -X POST {origin || "http://localhost:3000"}/api/webhook \</p>
                 <p className="pl-4">-H &quot;Content-Type: application/json&quot; \</p>
                 <p className="pl-4">-d &apos;{`{"name":"Juan","email":"j@test.com","phone":"555-1234"}`}&apos;</p>
               </div>

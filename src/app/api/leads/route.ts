@@ -74,12 +74,18 @@ export async function POST(req: NextRequest) {
   // 5. Normalize
   const normalized = normalizeLead(parsed.data);
 
-  // 6. Require at least one usable field
-  if (!normalized.name && !normalized.email && !normalized.phone) {
+  // 6. Validate required fields: nombre AND (email OR teléfono)
+  if (!normalized.name) {
+    return NextResponse.json(
+      { error: "El campo nombre es requerido" },
+      { status: 400 }
+    );
+  }
+  if (!normalized.email && !normalized.phone) {
     return NextResponse.json(
       {
-        error: "Se requiere al menos uno: nombre, email, o teléfono",
-        hint: "Envía al menos uno de: name/nombre, email/correo, phone/telefono",
+        error: "Se requiere email o teléfono",
+        hint: "Envía al menos uno de: email/correo, phone/telefono",
       },
       { status: 400 }
     );
