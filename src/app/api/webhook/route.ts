@@ -73,8 +73,8 @@ function extractFields(payload: Record<string, unknown>): Record<string, unknown
 
 export async function POST(request: NextRequest) {
   const auth = verifySharedSecret(request, {
-    envNames: ["OUTREACH_SECRET", "WEBHOOK_SECRET"],
-    headerNames: ["x-outreach-secret", "x-webhook-secret"],
+    envNames: ["CRM_API_SECRET", "OUTREACH_SECRET", "WEBHOOK_SECRET"],
+    headerNames: ["x-crm-secret", "x-outreach-secret", "x-webhook-secret"],
   });
 
   if (!auth.ok) {
