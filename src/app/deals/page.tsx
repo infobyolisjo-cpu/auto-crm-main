@@ -42,8 +42,8 @@ export default function DealsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Deals</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Oportunidades de venta activas</p>
+          <h1 className="text-[18px] font-semibold tracking-tight text-[#171717]">Deals</h1>
+          <p className="text-[13px] text-[#737373] mt-0.5">Oportunidades de venta activas</p>
         </div>
         <div className="flex gap-2">
           <button

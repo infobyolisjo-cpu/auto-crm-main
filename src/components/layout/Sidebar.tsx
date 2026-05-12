@@ -26,17 +26,17 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex md:w-56 md:flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] min-h-screen border-r border-[var(--sidebar-border)]">
+    <aside className="hidden md:flex md:w-52 md:flex-col bg-[var(--sidebar)] text-[var(--sidebar-foreground)] min-h-screen border-r border-[var(--sidebar-border)]">
       {/* Brand */}
-      <div className="flex h-14 items-center gap-2.5 px-4 border-b border-[var(--sidebar-border)]">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--sidebar-primary)]">
-          <Zap className="h-4 w-4 text-white" />
+      <div className="flex h-12 items-center gap-2.5 px-4 border-b border-[var(--sidebar-border)]">
+        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--sidebar-primary)]">
+          <Zap className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
         </div>
-        <span className="text-sm font-semibold tracking-tight">Auto-CRM</span>
+        <span className="text-[13px] font-semibold tracking-tight text-[var(--sidebar-foreground)]">Auto-CRM</span>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
+      <nav className="flex-1 px-2 py-2.5 space-y-px">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -46,13 +46,13 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150",
+                "flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] font-medium transition-colors duration-100",
                 isActive
-                  ? "bg-[var(--sidebar-accent)] text-white"
-                  : "text-[var(--sidebar-foreground)]/60 hover:bg-[var(--sidebar-accent)]/60 hover:text-[var(--sidebar-foreground)]"
+                  ? "bg-[var(--sidebar-primary)]/15 text-[var(--sidebar-primary)] [&_svg]:text-[var(--sidebar-primary)]"
+                  : "text-[var(--sidebar-foreground)]/50 hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-foreground)]/90"
               )}
             >
-              <item.icon className="h-4 w-4 shrink-0" />
+              <item.icon className="h-[15px] w-[15px] shrink-0" strokeWidth={isActive ? 2 : 1.75} />
               {item.label}
             </Link>
           );
@@ -60,8 +60,8 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-3 py-3 border-t border-[var(--sidebar-border)]">
-        <p className="text-[11px] text-[var(--sidebar-foreground)]/30 tracking-wide">
+      <div className="px-4 py-3 border-t border-[var(--sidebar-border)]">
+        <p className="text-[11px] text-[var(--sidebar-foreground)]/25 font-medium tracking-wide">
           ByOlisJo · v1.0
         </p>
       </div>

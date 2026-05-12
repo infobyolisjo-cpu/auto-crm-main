@@ -53,8 +53,8 @@ export default async function PipelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Pipeline</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Arrastra y suelta deals entre etapas</p>
+        <h1 className="text-[18px] font-semibold tracking-tight text-[#171717]">Pipeline</h1>
+        <p className="text-[13px] text-[#737373] mt-0.5">Arrastra y suelta deals entre etapas</p>
       </div>
 
       <KanbanBoard initialColumns={columns} />

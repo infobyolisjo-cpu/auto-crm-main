@@ -27,10 +27,11 @@ export default function ContactsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Contactos</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gestiona tus leads y prospectos</p>
+          <h1 className="text-[18px] font-semibold tracking-tight text-[#171717]">Contactos</h1>
+          <p className="text-[13px] text-[#737373] mt-0.5">Gestiona tus leads y prospectos</p>
         </div>
-        <Button size="sm" onClick={() => setShowForm(true)} className="cursor-pointer">
+        <Button size="sm" onClick={() => setShowForm(true)}
+          className="cursor-pointer h-8 px-3 text-[13px] bg-[#171717] hover:bg-[#333] text-white border-0">
           <Plus className="h-3.5 w-3.5 mr-1.5" />
           Nuevo
         </Button>

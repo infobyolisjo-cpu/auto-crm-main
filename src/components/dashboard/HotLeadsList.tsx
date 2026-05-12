@@ -17,36 +17,39 @@ interface HotLead {
 
 export function HotLeadsList({ leads }: { leads: HotLead[] }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-4">
+    <div className="rounded-lg bg-white shadow-card px-4 py-4">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
-          <Flame className="h-3.5 w-3.5 text-red-500" />
+        <p className="text-[11px] font-medium uppercase tracking-wider text-[#737373] flex items-center gap-1.5">
+          <Flame className="h-3.5 w-3.5 text-orange-500" />
           Leads calientes
         </p>
-        <span className="text-[11px] text-foreground/50 tabular-nums font-medium">{leads.length}</span>
+        <span className="text-[11px] text-[#a3a3a3] tabular-nums font-medium">{leads.length}</span>
       </div>
 
       {leads.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">Sin leads calientes</p>
+        <p className="text-sm text-[#a3a3a3] text-center py-6">Sin leads calientes</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-px">
           {leads.slice(0, 5).map((lead) => (
-            <div key={lead.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/40 transition-colors group">
+            <div
+              key={lead.id}
+              className="flex items-center gap-3 rounded-md px-2 py-[7px] hover:bg-[#fafafa] transition-colors group"
+            >
               <ContactAvatar name={lead.name} temperature="hot" size="sm" />
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/contacts/${lead.id}`}
-                  className="text-[13px] font-medium truncate block hover:text-primary transition-colors"
+                  className="text-[13px] font-medium truncate block text-[#171717] hover:text-[#5e6ad2] transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {lead.name}
                 </Link>
                 {lead.interest && (
-                  <p className="text-[11px] text-muted-foreground truncate">{lead.interest}</p>
+                  <p className="text-[11px] text-[#737373] truncate">{lead.interest}</p>
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[11px] tabular-nums text-foreground/50 font-medium">{lead.score}</span>
+                <span className="text-[11px] tabular-nums text-[#a3a3a3] font-medium">{lead.score}</span>
                 {lead.phone ? (
                   <a
                     href={`https://wa.me/${cleanPhoneForWhatsApp(lead.phone)}`}
@@ -59,7 +62,7 @@ export function HotLeadsList({ leads }: { leads: HotLead[] }) {
                     <MessageCircle className="h-3.5 w-3.5 text-emerald-500" />
                   </a>
                 ) : (
-                  <ArrowRight className="h-3 w-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight className="h-3 w-3 text-[#d4d4d4] opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
             </div>

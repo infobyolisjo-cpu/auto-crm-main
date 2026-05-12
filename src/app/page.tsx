@@ -131,8 +131,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Resumen de tu pipeline de ventas</p>
+        <h1 className="text-[18px] font-semibold tracking-tight text-[#171717]">Dashboard</h1>
+        <p className="text-[13px] text-[#737373] mt-0.5">Resumen de tu pipeline de ventas</p>
       </div>
 
       {isFirstRun && (

@@ -74,8 +74,8 @@ export default function ActivitiesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Actividades</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Historial de interacciones y seguimientos</p>
+          <h1 className="text-[18px] font-semibold tracking-tight text-[#171717]">Actividades</h1>
+          <p className="text-[13px] text-[#737373] mt-0.5">Historial de interacciones y seguimientos</p>
         </div>
         <Button size="sm" onClick={() => setShowForm(true)} className="cursor-pointer">
           <Plus className="h-3.5 w-3.5 mr-1.5" />
